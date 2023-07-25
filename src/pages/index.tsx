@@ -7,22 +7,44 @@ export default function Home() {
 
   const createField = (e: any) => {
     e.preventDefault()
-    setField(Array(sizeX).fill((Array(sizeY).fill({id: 0}))))
+    let fieldX:any = []
+    let idX:number
+    let idY:number
+    for (idX = 0; idX < sizeX; idX++) {
+      const arrayX:any = []
+      for (let j = 0; j < sizeY; j++) {
+        arrayX.push({
+          id: idY,
+          bomb: true
+        })
+        idY++
+      }
+      fieldX.push({
+        id: idX,
+        array: arrayX
+      })
+    }
+    setField(fieldX)
   }
 
   return (
-    <div>
-      <form onSubmit={createField}>
-        <input autoComplete="off" onChange={(e)=>setSizeX(Number(e.target.value))}></input>
-        <span>X</span>
-        <input autoComplete="off" onChange={(e)=>setSizeY(Number(e.target.value))}></input>
-        <button>НАЧАТЬ ИГРУ</button>
+    <div className='mainPage'>
+      <span className='mainSpan'>«СИМУЛЯТОР ДОНБАССА»</span>
+      <form className='gameForm' onSubmit={createField}>
+        <div className='gameDiv'>
+          <input className='gameInput' autoComplete="off" onChange={(e)=>setSizeX(Number(e.target.value))}></input>
+          <span className='gameSpan'>X</span>
+          <input className='gameInput' autoComplete="off" onChange={(e)=>setSizeY(Number(e.target.value))}></input>
+        </div>
+        <button className='gameButton'>НАЧАТЬ ИГРУ</button>
       </form>
-      <div>
+      <div className='fieldDiv'>
         {field.map((cellX:any)=>(
-          cellX.map((cell:object)=>(
-            <>1</>
-          ))
+          <div className='filedCellX' key={cellX.id}>
+          {cellX.array.map((cell:any)=>(
+            <div className='fieldCell' key={cell.id}></div>
+          ))}
+          </div>
         ))}
       </div>
     </div>
