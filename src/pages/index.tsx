@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { services } from '@/services'
 
 export default function Home() {
   const [field, setField] = useState<any>([])
@@ -37,47 +38,45 @@ export default function Home() {
     return bomb < 0.1 ? 1 : 0
   }
 
+  //const openCellsAround = (idX: number, id: number, fieldX: any) => {
+  //  if (
+  //    idX < 0 ||
+  //    idX >= sizeX ||
+  //    id < 0 ||
+  //    id >= sizeY ||
+  //    fieldX[idX].array[id].click ||
+  //    fieldX[idX].array[id].bomb
+  //  ) {
+  //    return;
+  //  }
+  //
+  //  fieldX[idX].array[id].click = true;
+  //
+  //  if (fieldX[idX].array[id].countBomb === 0) {
+  //    openCellsAround(idX - 1, id - 1, fieldX);
+  //    openCellsAround(idX - 1, id, fieldX);
+  //    openCellsAround(idX - 1, id + 1, fieldX);
+  //    openCellsAround(idX, id - 1, fieldX);
+  //    openCellsAround(idX, id + 1, fieldX);
+  //    openCellsAround(idX + 1, id - 1, fieldX);
+  //    openCellsAround(idX + 1, id, fieldX);
+  //    openCellsAround(idX + 1, id + 1, fieldX);
+  //  }
+  //}
+
   const cellClick = (idX: number, id: number) => {
-    let countBomb = 0
     const fieldX = [...field]
     fieldX[idX].array[id].click = true
-    
     if (field[idX].array[id].bomb === true) {
       fieldX.map((arrayX: any) => arrayX.array.map((cellX: any) => cellX.bomb ? cellX.click = true : null))
     } else {
-      if (field[idX-1]?.array[id-1]?.bomb === true) {
-        countBomb++
-        console.log(111, idX-1, id-1)
+      if (services.saper.checkBomb(idX, id, fieldX)) {
+        fieldX[idX].array[id].countBomb = services.saper.checkBomb(idX, id, fieldX)
+      } else {
+        if (fieldX[idX].array[id].countBomb === 0) {
+          services.saper.checkCell(idX, id, fieldX)
+        }
       }
-      if (field[idX-1]?.array[id]?.bomb === true) {
-        countBomb++
-        console.log(222, idX-1, id)
-      }
-      if (field[idX-1]?.array[id+1]?.bomb === true) {
-        countBomb++
-        console.log(333, idX-1, id+1)
-      }
-      if (field[idX]?.array[id-1]?.bomb === true) {
-        countBomb++
-        console.log(444, idX, id-1)
-      }
-      if (field[idX]?.array[id+1]?.bomb === true) {
-        countBomb++
-        console.log(555, idX, id+1)
-      }
-      if (field[idX+1]?.array[id-1]?.bomb === true) {
-        countBomb++
-        console.log(666, idX+1, id-1)
-      }
-      if (field[idX+1]?.array[id]?.bomb === true) {
-        countBomb++
-        console.log(777, idX+1, id)
-      }
-      if (field[idX+1]?.array[id+1]?.bomb === true) {
-        countBomb++
-        console.log(888, idX+1, id+1)
-      }
-      fieldX[idX].array[id].countBomb = countBomb
     }
     setField(fieldX)
     console.log(fieldX)
@@ -85,7 +84,7 @@ export default function Home() {
 
   return (
     <div className='mainPage'>
-      <span className='mainSpan'>«СИМУЛЯТОР ДОНБАССА»</span>
+      <span className='mainSpan'>«САПЕР ОФФЛАЙН»</span>
       <form className='gameForm' onSubmit={createField}>
         <div className='gameDiv'>
           <input className='gameInput' autoComplete="off" onChange={(e)=>setSizeX(Number(e.target.value))}></input>
@@ -99,7 +98,8 @@ export default function Home() {
           <div className='filedCellX' key={cellX.id}>
           {cellX?.array?.map((cell:any, index: number)=>(
             <button className={`${cell.click && cell.bomb ? 'bomb' : ''} 
-            ${cell.click && cell.countBomb === 1 ? 'one' : 
+            ${cell.click && cell.countBomb === 0 ? 'click' : 
+            cell.click && cell.countBomb === 1 ? 'one' : 
             cell.click && cell.countBomb === 2 ? 'two' : 
             cell.click && cell.countBomb === 3 ? 'three' : 
             cell.click && cell.countBomb === 4 ? 'four' : 
@@ -112,7 +112,6 @@ export default function Home() {
           </div>
         ))}
       </div>
-      <span className='span'>ТЫ СДОХ НАХУЙ, АМЕРИКА ЗАХУЯРИЛА ТЕБЯ ЯДЕРКОЙ</span>
     </div>
   )
 }
