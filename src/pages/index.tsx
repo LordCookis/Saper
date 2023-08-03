@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { services } from '@/services'
 
 export default function Home() {
@@ -6,10 +6,19 @@ export default function Home() {
   const [sizeX, setSizeX] = useState<number>(0)
   const [sizeY, setSizeY] = useState<number>(0)
   const [bombs, setBombs] = useState<number>(0)
+  const [flags, setFlags] = useState<number>(0)
+  const [win, setWin] = useState<number>(0)
+
+  useEffect(() => {
+    win === 10 && flags === 10 ? alert("ПОБЕДА") : null
+    console.log(win)
+  }, [win, flags])
 
   const createField = (e: any) => {
     e.preventDefault()
     setField([])
+    setFlags(0)
+    setWin(0)
     const fieldX:any = []
     let idX:number = 0
     let idY:number = 0
@@ -20,7 +29,8 @@ export default function Home() {
           id: idY,
           bomb: Boolean(randomBomb()),
           click: false,
-          countBomb: 0
+          countBomb: 0,
+          flag: false
         })
         idY++
       }
@@ -35,15 +45,19 @@ export default function Home() {
   }
 
   const randomBomb = () => {
-    const bomb = Math.random()
-    return bomb < (bombs / 100) ? 1 : 0
+    const bombX = Math.random()
+    return bombX < (bombs / 100) ? 1 : 0
   }
 
   const cellClick = (idX: number, id: number) => {
     const fieldX = [...field]
-    fieldX[idX].array[id].click = true
+    fieldX[idX].array[id].click = true 
+    fieldX[idX].array[id].flag = false
     if (field[idX].array[id].bomb === true) {
-      fieldX.map((arrayX: any) => arrayX.array.map((cellX: any) => cellX.bomb ? cellX.click = true : null))
+      fieldX.map((arrayX: any) => arrayX.array.map((cellX: any) => {
+        cellX.bomb ? cellX.click = true : null
+        cellX.flag ? cellX.flag = false : null
+      }))
     } else {
       if (services.saper.checkBomb(idX, id, fieldX)) {
         fieldX[idX].array[id].countBomb = services.saper.checkBomb(idX, id, fieldX)
@@ -54,7 +68,26 @@ export default function Home() {
       }
     }
     setField(fieldX)
-    console.log(fieldX)
+    console.log(fieldX[idX].array[id])
+  }
+
+  const putFlag = (e: any, idX: number, id: number) => {
+    e.preventDefault()
+    let flagsX = flags
+    let winX = win
+    const fieldX = [...field]
+    if (!fieldX[idX].array[id].click && !fieldX[idX].array[id].flag) {
+      fieldX[idX].array[id].flag = true
+      setFlags(flagsX + 1)
+      fieldX[idX].array[id].countBomb = 'F'
+      fieldX[idX].array[id].bomb === true ? setWin(winX += 1) : null
+    } else if (!fieldX[idX].array[id].click && fieldX[idX].array[id].flag) {
+      fieldX[idX].array[id].flag = false
+      setFlags(flagsX - 1)
+      fieldX[idX].array[id].countBomb = 0
+      fieldX[idX].array[id].bomb === true ? setWin(winX-=1) : null 
+    }
+    setField(fieldX)
   }
 
   return (
@@ -85,7 +118,8 @@ export default function Home() {
             cell.click && cell.countBomb === 6 ? 'six' : 
             cell.click && cell.countBomb === 7 ? 'seven' : 
             cell.click && cell.countBomb === 8 ? 'eight' : 
-            null}`} key={cell.id} onClick={()=>cellClick(indexX, index)}>{cell.countBomb}</button>
+            cell.flag === true ? 'flag' :
+            null}`} key={cell.id} onClick={()=>cellClick(indexX, index)} onContextMenu={(e)=>putFlag(e, indexX, index)}>{cell.countBomb}</button>
           ))}
           </div>
         ))}
