@@ -5,6 +5,7 @@ export default function Home() {
   const [field, setField] = useState<any>([])
   const [sizeX, setSizeX] = useState<number>(0)
   const [sizeY, setSizeY] = useState<number>(0)
+  const [bombs, setBombs] = useState<number>(0)
 
   const createField = (e: any) => {
     e.preventDefault()
@@ -35,34 +36,8 @@ export default function Home() {
 
   const randomBomb = () => {
     const bomb = Math.random()
-    return bomb < 0.1 ? 1 : 0
+    return bomb < (bombs / 100) ? 1 : 0
   }
-
-  //const openCellsAround = (idX: number, id: number, fieldX: any) => {
-  //  if (
-  //    idX < 0 ||
-  //    idX >= sizeX ||
-  //    id < 0 ||
-  //    id >= sizeY ||
-  //    fieldX[idX].array[id].click ||
-  //    fieldX[idX].array[id].bomb
-  //  ) {
-  //    return;
-  //  }
-  //
-  //  fieldX[idX].array[id].click = true;
-  //
-  //  if (fieldX[idX].array[id].countBomb === 0) {
-  //    openCellsAround(idX - 1, id - 1, fieldX);
-  //    openCellsAround(idX - 1, id, fieldX);
-  //    openCellsAround(idX - 1, id + 1, fieldX);
-  //    openCellsAround(idX, id - 1, fieldX);
-  //    openCellsAround(idX, id + 1, fieldX);
-  //    openCellsAround(idX + 1, id - 1, fieldX);
-  //    openCellsAround(idX + 1, id, fieldX);
-  //    openCellsAround(idX + 1, id + 1, fieldX);
-  //  }
-  //}
 
   const cellClick = (idX: number, id: number) => {
     const fieldX = [...field]
@@ -90,6 +65,9 @@ export default function Home() {
           <input className='gameInput' autoComplete="off" onChange={(e)=>setSizeX(Number(e.target.value))}></input>
           <span className='gameSpan'>X</span>
           <input className='gameInput' autoComplete="off" onChange={(e)=>setSizeY(Number(e.target.value))}></input>
+        </div>
+        <div className='gameDiv'>
+          <input className='gameInput' autoComplete="off" onChange={(e)=>setBombs(Number(e.target.value))}></input>
         </div>
         <button className='gameButton'>НАЧАТЬ ИГРУ</button>
       </form>
