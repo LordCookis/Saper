@@ -115,12 +115,11 @@ export default function Home() {
           <input className='gameInput' autoComplete="off" onChange={(e)=>setSizeY(Number(e.target.value))}></input>
         </div>
         <div className='gameDiv'>
+          <span className='bombSpan'>БОМБ: </span>
           <input className='gameInput' autoComplete="off" onChange={(e)=>setBombs(Number(e.target.value))}></input>
         </div>
         <button className='gameButton'>НАЧАТЬ ИГРУ</button>
-
       </form>
-      {bombs ? <span className='mainSpan'>БОМБ: {bombs}</span> : null}
       <div className='fieldDiv'>
         {field?.map((cellX:any, indexX:number)=>(
           <div className='filedCellX' key={cellX.id}>
