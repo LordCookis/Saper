@@ -6,7 +6,6 @@ export default function Home() {
   const [sizeX, setSizeX] = useState<number>(0)
   const [sizeY, setSizeY] = useState<number>(0)
   const [bombs, setBombs] = useState<number>(0)
-  const [bombsId, setBombsId] = useState<any>([])
   const [executed, setExecuted] = useState<boolean>(false)
   const [flags, setFlags] = useState<number>(0)
   const [win, setWin] = useState<number>(0)
