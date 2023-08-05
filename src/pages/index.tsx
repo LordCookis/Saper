@@ -5,6 +5,7 @@ export default function Home() {
   const [field, setField] = useState<any>([])
   const [sizeX, setSizeX] = useState<number>(0)
   const [sizeY, setSizeY] = useState<number>(0)
+  const [bombChance, setBombChance] = useState<number>(0)
   const [bombs, setBombs] = useState<number>(0)
   const [flags, setFlags] = useState<number>(0)
   const [win, setWin] = useState<number>(0)
@@ -22,6 +23,7 @@ export default function Home() {
     const fieldX:any = []
     let idX:number = 0
     let idY:number = 0
+    let bombY:number = 0
     for (let i = 0; i < sizeX; i++) {
       const arrayX:any = []
       for (let j = 0; j < sizeY; j++) {
@@ -32,6 +34,7 @@ export default function Home() {
           countBomb: 0,
           flag: false
         })
+        arrayX[j].bomb === true ? bombY++ : null
         idY++
       }
       fieldX.push({
@@ -40,13 +43,14 @@ export default function Home() {
       })
       idX++
     }
+    setBombs(bombY)
     setField(fieldX)
     console.log(fieldX)
   }
 
-  const randomBomb = () => {
+  const randomBomb = () => { 
     const bombX = Math.random()
-    return bombX < (bombs / 100) ? 1 : 0
+    return bombX < (bombChance / 100) ? 1 : 0
   }
 
   const cellClick = (idX: number, id: number) => {
@@ -73,8 +77,8 @@ export default function Home() {
 
   const putFlag = (e: any, idX: number, id: number) => {
     e.preventDefault()
-    let flagsX = flags
-    let winX = win
+    let flagsX:number = flags
+    let winX:number = win
     const fieldX = [...field]
     if (!fieldX[idX].array[id].click && !fieldX[idX].array[id].flag) {
       fieldX[idX].array[id].flag = true
@@ -100,10 +104,11 @@ export default function Home() {
           <input className='gameInput' autoComplete="off" onChange={(e)=>setSizeY(Number(e.target.value))}></input>
         </div>
         <div className='gameDiv'>
-          <input className='gameInput' autoComplete="off" onChange={(e)=>setBombs(Number(e.target.value))}></input>
+          <input className='gameInput' autoComplete="off" onChange={(e)=>setBombChance(Number(e.target.value))}></input>
         </div>
         <button className='gameButton'>НАЧАТЬ ИГРУ</button>
       </form>
+      <span className='mainSpan'>БОМБ: {bombs}</span>
       <div className='fieldDiv'>
         {field?.map((cellX:any, indexX:number)=>(
           <div className='filedCellX' key={cellX.id}>
