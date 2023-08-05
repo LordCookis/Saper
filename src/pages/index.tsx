@@ -10,10 +10,11 @@ export default function Home() {
   const [executed, setExecuted] = useState<boolean>(false)
   const [flags, setFlags] = useState<number>(0)
   const [win, setWin] = useState<number>(0)
+  const [error, setError] = useState<string>("")
 
   useEffect(() => {
-    win === 10 && flags === 10 ? alert("ПОБЕДА") : null
-  }, [win, flags])
+    win === bombs && flags === bombs ? alert("ПОБЕДА") : null
+  }, [win, flags, bombs])
 
   const fillState = (e: any) => {
     e.preventDefault()
@@ -21,32 +22,38 @@ export default function Home() {
     setExecuted(false)
     setFlags(0)
     setWin(0)
-    const fieldX:any = []
-    let idX:number = 0
-    let idY:number = 0
-    for (let i = 0; i < sizeX; i++) {
-      const arrayX:any = []
-      for (let j = 0; j < sizeY; j++) {
-        arrayX.push({
-          id: idY,
-          bomb: false,
-          click: false,
-          countBomb: 0,
-          flag: false
+    setError("")
+    if ((sizeX * sizeY) > bombs) {
+      const fieldX:any = []
+      let idX:number = 0
+      let idY:number = 0
+      for (let i = 0; i < sizeX; i++) {
+        const arrayX:any = []
+        for (let j = 0; j < sizeY; j++) {
+          arrayX.push({
+            id: idY,
+            bomb: false,
+            click: false,
+            countBomb: 0,
+            flag: false
+          })
+          idY++
+        }
+        fieldX.push({
+          id: idX,
+          array: arrayX
         })
-        idY++
+        idX++
       }
-      fieldX.push({
-        id: idX,
-        array: arrayX
-      })
-      idX++
+      setField(fieldX)
+    } else if (sizeX * sizeY === bombs) {
+      setError("Ошибка: минимум одна ячейка должна быть без бомбы")
+    } else {
+      setError("Ошибка: бомб больше чем ячеек на поле")
     }
-    setField(fieldX)
   }
 
   const randomBomb = (idX: number, id: number) => {
-    console.log(field[0])
     const arrayBombs:any = []
     while (arrayBombs.length < bombs) {
       const randomCell = Math.floor(Math.random() * ((sizeX * sizeY) + 1));
@@ -119,6 +126,7 @@ export default function Home() {
           <input className='gameInput' autoComplete="off" onChange={(e)=>setBombs(Number(e.target.value))}></input>
         </div>
         <button className='gameButton'>НАЧАТЬ ИГРУ</button>
+        <span className='errorSpan'>{error}</span>
       </form>
       <div className='fieldDiv'>
         {field?.map((cellX:any, indexX:number)=>(
