@@ -5,36 +5,35 @@ export default function Home() {
   const [field, setField] = useState<any>([])
   const [sizeX, setSizeX] = useState<number>(0)
   const [sizeY, setSizeY] = useState<number>(0)
-  const [bombChance, setBombChance] = useState<number>(0)
   const [bombs, setBombs] = useState<number>(0)
+  const [bombsId, setBombsId] = useState<any>([])
+  const [executed, setExecuted] = useState<boolean>(false)
   const [flags, setFlags] = useState<number>(0)
   const [win, setWin] = useState<number>(0)
 
   useEffect(() => {
     win === 10 && flags === 10 ? alert("ПОБЕДА") : null
-    console.log(win)
   }, [win, flags])
 
-  const createField = (e: any) => {
+  const fillState = (e: any) => {
     e.preventDefault()
     setField([])
+    setExecuted(false)
     setFlags(0)
     setWin(0)
     const fieldX:any = []
     let idX:number = 0
     let idY:number = 0
-    let bombY:number = 0
     for (let i = 0; i < sizeX; i++) {
       const arrayX:any = []
       for (let j = 0; j < sizeY; j++) {
         arrayX.push({
           id: idY,
-          bomb: Boolean(randomBomb()),
+          bomb: false,
           click: false,
           countBomb: 0,
           flag: false
         })
-        arrayX[j].bomb === true ? bombY++ : null
         idY++
       }
       fieldX.push({
@@ -43,17 +42,30 @@ export default function Home() {
       })
       idX++
     }
-    setBombs(bombY)
     setField(fieldX)
-    console.log(fieldX)
   }
 
-  const randomBomb = () => { 
-    const bombX = Math.random()
-    return bombX < (bombChance / 100) ? 1 : 0
+  const randomBomb = (idX: number, id: number) => {
+    console.log(field[0])
+    const arrayBombs:any = []
+    while (arrayBombs.length < bombs) {
+      const randomCell = Math.floor(Math.random() * ((sizeX * sizeY) + 1));
+      if (randomCell !== field[idX].array[id].id && !arrayBombs.includes(randomCell)) {
+        arrayBombs.push(randomCell)
+      }
+    }
+    const fieldX:any = field
+    for (let bombId of arrayBombs) {
+      fieldX.map((arrayX: any) => arrayX.array.map((cell: any) => cell.id === bombId ? cell.bomb = true : null))
+    }
+    setField(fieldX)
   }
 
   const cellClick = (idX: number, id: number) => {
+    if (!executed) {
+      setExecuted(true)
+      randomBomb(idX, id)
+    }
     const fieldX = [...field]
     fieldX[idX].array[id].click = true 
     fieldX[idX].array[id].flag = false
@@ -72,7 +84,6 @@ export default function Home() {
       }
     }
     setField(fieldX)
-    console.log(fieldX[idX].array[id])
   }
 
   const putFlag = (e: any, idX: number, id: number) => {
@@ -97,18 +108,19 @@ export default function Home() {
   return (
     <div className='mainPage'>
       <span className='mainSpan'>«САПЕР ОФФЛАЙН»</span>
-      <form className='gameForm' onSubmit={createField}>
+      <form className='gameForm' onSubmit={fillState}>
         <div className='gameDiv'>
           <input className='gameInput' autoComplete="off" onChange={(e)=>setSizeX(Number(e.target.value))}></input>
           <span className='gameSpan'>X</span>
           <input className='gameInput' autoComplete="off" onChange={(e)=>setSizeY(Number(e.target.value))}></input>
         </div>
         <div className='gameDiv'>
-          <input className='gameInput' autoComplete="off" onChange={(e)=>setBombChance(Number(e.target.value))}></input>
+          <input className='gameInput' autoComplete="off" onChange={(e)=>setBombs(Number(e.target.value))}></input>
         </div>
         <button className='gameButton'>НАЧАТЬ ИГРУ</button>
+
       </form>
-      <span className='mainSpan'>БОМБ: {bombs}</span>
+      {bombs ? <span className='mainSpan'>БОМБ: {bombs}</span> : null}
       <div className='fieldDiv'>
         {field?.map((cellX:any, indexX:number)=>(
           <div className='filedCellX' key={cellX.id}>
@@ -124,7 +136,7 @@ export default function Home() {
             cell.click && cell.countBomb === 7 ? 'seven' : 
             cell.click && cell.countBomb === 8 ? 'eight' : 
             cell.flag === true ? 'flag' :
-            null}`} key={cell.id} onClick={()=>cellClick(indexX, index)} onContextMenu={(e)=>putFlag(e, indexX, index)}>{cell.countBomb}</button>
+            null}`} key={cell.id} onClick={(e)=>cellClick(indexX, index)} onContextMenu={(e)=>putFlag(e, indexX, index)}>{cell.countBomb}</button>
           ))}
           </div>
         ))}
