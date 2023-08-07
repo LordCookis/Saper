@@ -1,24 +1,28 @@
 import { useEffect, useState } from 'react'
 import { services } from '@/services'
+let executed = false
 
 export default function Home() {
   const [field, setField] = useState<any>([])
   const [sizeX, setSizeX] = useState<number>(0)
   const [sizeY, setSizeY] = useState<number>(0)
   const [bombs, setBombs] = useState<number>(0)
-  const [executed, setExecuted] = useState<boolean>(false)
+  //const [executed, setExecuted] = useState<boolean>(false)
   const [flags, setFlags] = useState<number>(0)
   const [win, setWin] = useState<number>(0)
   const [error, setError] = useState<string>("")
 
   useEffect(() => {
     (win === bombs && flags === bombs) && (win > 0 && flags > 0) ? alert("ПОБЕДА") : null
+    console.log("win", win)
+    console.log("flags", flags)
   }, [win, flags, bombs])
 
   const fillState = (e: any) => {
     e.preventDefault()
     setField([])
-    setExecuted(false)
+    //setExecuted(false)
+    executed = false
     setFlags(0)
     setWin(0)
     setError("")
@@ -45,7 +49,7 @@ export default function Home() {
         idX++
       }
       setField(fieldX)
-      console.log(fieldX)
+      console.log("1", fieldX)
       console.log(bombs)
     } else if (sizeX * sizeY === bombs) {
       setError("Ошибка: минимум одна ячейка должна быть без бомбы")
@@ -57,25 +61,26 @@ export default function Home() {
   const randomBomb = (idX: number, id: number) => {
     const arrayBombs:any = []
     while (arrayBombs.length < bombs) {
-      const randomCell = Math.floor(Math.random() * ((sizeX * sizeY) + 1));
+      const randomCell = Math.floor(Math.random() * ((sizeX * sizeY) + 1))
       if (randomCell !== field[idX].array[id].id && !arrayBombs.includes(randomCell)) {
         arrayBombs.push(randomCell)
       }
     }
-    const fieldX:any = field
+    const fieldX:any = [...field]
     for (let bombId of arrayBombs) {
       fieldX.map((arrayX: any) => arrayX.array.map((cell: any) => cell.id === bombId ? cell.bomb = true : null))
     }
+    console.log("123", fieldX)
     setField(fieldX)
   }
 
   const cellClick = (idX: number, id: number) => {
     if (!executed) {
-      setExecuted(true)
+      executed = true
       randomBomb(idX, id)
     }
     const fieldX = [...field]
-    if (!(idX < 0 || idX >= fieldX.length || id < 0 || id >= fieldX[idX].length) && fieldX[idX].array[id].click === false) {
+    if (!(idX < 0 || idX >= fieldX.length || id < 0 || id >= fieldX[idX].length) && fieldX[idX]?.array[id]?.click === false) {
       fieldX[idX].array[id].flag = false
       if (field[idX]?.array[id]?.bomb === true) {
         fieldX.map((arrayX: any) => arrayX.array.map((cellX: any) => {
