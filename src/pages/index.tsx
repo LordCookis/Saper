@@ -12,7 +12,7 @@ export default function Home() {
   const [error, setError] = useState<string>("")
 
   useEffect(() => {
-    win === bombs && flags === bombs ? alert("ПОБЕДА") : null
+    (win === bombs && flags === bombs) && (win > 0 && flags > 0) ? alert("ПОБЕДА") : null
   }, [win, flags, bombs])
 
   const fillState = (e: any) => {
@@ -45,6 +45,8 @@ export default function Home() {
         idX++
       }
       setField(fieldX)
+      console.log(fieldX)
+      console.log(bombs)
     } else if (sizeX * sizeY === bombs) {
       setError("Ошибка: минимум одна ячейка должна быть без бомбы")
     } else {
@@ -73,21 +75,31 @@ export default function Home() {
       randomBomb(idX, id)
     }
     const fieldX = [...field]
-    fieldX[idX].array[id].click = true 
-    fieldX[idX].array[id].flag = false
-    if (field[idX].array[id].bomb === true) {
-      fieldX.map((arrayX: any) => arrayX.array.map((cellX: any) => {
-        cellX.bomb ? cellX.click = true : null
-        cellX.flag ? cellX.flag = false : null
-      }))
-    } else {
-      if (services.saper.checkBomb(idX, id, fieldX)) {
-        fieldX[idX].array[id].countBomb = services.saper.checkBomb(idX, id, fieldX)
-      } else {
-        if (fieldX[idX].array[id].countBomb === 0) {
-          services.saper.checkCell(idX, id, fieldX)
+    if (!(idX < 0 || idX >= fieldX.length || id < 0 || id >= fieldX[idX].length) && fieldX[idX].array[id].click === false) {
+      fieldX[idX].array[id].flag = false
+      if (field[idX]?.array[id]?.bomb === true) {
+        fieldX.map((arrayX: any) => arrayX.array.map((cellX: any) => {
+          cellX.bomb ? cellX.click = true : null
+          cellX.flag ? cellX.flag = false : null
+        }))
+      } else if (fieldX[idX].array[id].click === false) {
+        if (services.saper.checkBomb(idX, id, fieldX)) {
+          fieldX[idX].array[id].countBomb = services.saper.checkBomb(idX, id, fieldX)
+        } else {
+          if (fieldX[idX].array[id].countBomb === 0) {
+            fieldX[idX].array[id].click = true
+            cellClick(idX - 1, id - 1)
+            cellClick(idX - 1, id)
+            cellClick(idX - 1, id + 1)
+            cellClick(idX, id - 1)
+            cellClick(idX, id + 1)
+            cellClick(idX + 1, id - 1)
+            cellClick(idX + 1, id)
+            cellClick(idX + 1, id + 1)
+          }
         }
       }
+      fieldX[idX].array[id].click = true
     }
     setField(fieldX)
   }
