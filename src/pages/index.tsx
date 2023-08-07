@@ -4,19 +4,18 @@ let executed = false
 
 export default function Home() {
   const [field, setField] = useState<any>([])
-  const [sizeX, setSizeX] = useState<number>(0)
-  const [sizeY, setSizeY] = useState<number>(0)
+  const [size, setSize] = useState<any>({X: 0, Y: 0})
+  //const [sizeX, setSizeX] = useState<number>(0)
+  //const [sizeY, setSizeY] = useState<number>(0)
   const [bombs, setBombs] = useState<number>(0)
   //const [executed, setExecuted] = useState<boolean>(false)
   const [flags, setFlags] = useState<number>(0)
-  const [win, setWin] = useState<number>(0)
+  const [markedBombs, setMarkedBombs] = useState<number>(0)
   const [error, setError] = useState<string>("")
 
   useEffect(() => {
-    (win === bombs && flags === bombs) && (win > 0 && flags > 0) ? alert("ПОБЕДА") : null
-    console.log("win", win)
-    console.log("flags", flags)
-  }, [win, flags, bombs])
+    (markedBombs === bombs && flags === bombs) && (markedBombs > 0 && flags > 0) ? alert("ПОБЕДА") : null
+  }, [markedBombs, flags, bombs])
 
   const fillState = (e: any) => {
     e.preventDefault()
@@ -24,15 +23,15 @@ export default function Home() {
     //setExecuted(false)
     executed = false
     setFlags(0)
-    setWin(0)
+    setMarkedBombs(0)
     setError("")
-    if ((sizeX * sizeY) > bombs) {
+    if ((size.X * size.Y) > bombs) {
       const fieldX:any = []
       let idX:number = 0
       let idY:number = 0
-      for (let i = 0; i < sizeX; i++) {
+      for (let i = 0; i < size.X; i++) {
         const arrayX:any = []
-        for (let j = 0; j < sizeY; j++) {
+        for (let j = 0; j < size.Y; j++) {
           arrayX.push({
             id: idY,
             bomb: false,
@@ -51,7 +50,7 @@ export default function Home() {
       setField(fieldX)
       console.log("1", fieldX)
       console.log(bombs)
-    } else if (sizeX * sizeY === bombs) {
+    } else if (size.X * size.Y === bombs) {
       setError("Ошибка: минимум одна ячейка должна быть без бомбы")
     } else {
       setError("Ошибка: бомб больше чем ячеек на поле")
@@ -61,7 +60,7 @@ export default function Home() {
   const randomBomb = (idX: number, id: number) => {
     const arrayBombs:any = []
     while (arrayBombs.length < bombs) {
-      const randomCell = Math.floor(Math.random() * ((sizeX * sizeY) + 1))
+      const randomCell = Math.floor(Math.random() * ((size.X * size.Y) + 1))
       if (randomCell !== field[idX].array[id].id && !arrayBombs.includes(randomCell)) {
         arrayBombs.push(randomCell)
       }
@@ -70,7 +69,6 @@ export default function Home() {
     for (let bombId of arrayBombs) {
       fieldX.map((arrayX: any) => arrayX.array.map((cell: any) => cell.id === bombId ? cell.bomb = true : null))
     }
-    console.log("123", fieldX)
     setField(fieldX)
   }
 
@@ -82,7 +80,7 @@ export default function Home() {
     const fieldX = [...field]
     if (!(idX < 0 || idX >= fieldX.length || id < 0 || id >= fieldX[idX].length) && fieldX[idX]?.array[id]?.click === false) {
       fieldX[idX].array[id].flag = false
-      if (field[idX]?.array[id]?.bomb === true) {
+      if (fieldX[idX]?.array[id]?.bomb === true) {
         fieldX.map((arrayX: any) => arrayX.array.map((cellX: any) => {
           cellX.bomb ? cellX.click = true : null
           cellX.flag ? cellX.flag = false : null
@@ -112,18 +110,18 @@ export default function Home() {
   const putFlag = (e: any, idX: number, id: number) => {
     e.preventDefault()
     let flagsX:number = flags
-    let winX:number = win
+    let markedBombsX:number = markedBombs
     const fieldX = [...field]
     if (!fieldX[idX].array[id].click && !fieldX[idX].array[id].flag) {
       fieldX[idX].array[id].flag = true
       setFlags(flagsX + 1)
       fieldX[idX].array[id].countBomb = 'F'
-      fieldX[idX].array[id].bomb === true ? setWin(winX += 1) : null
+      fieldX[idX].array[id].bomb === true ? setMarkedBombs(markedBombsX += 1) : null
     } else if (!fieldX[idX].array[id].click && fieldX[idX].array[id].flag) {
       fieldX[idX].array[id].flag = false
       setFlags(flagsX - 1)
       fieldX[idX].array[id].countBomb = 0
-      fieldX[idX].array[id].bomb === true ? setWin(winX-=1) : null 
+      fieldX[idX].array[id].bomb === true ? setMarkedBombs(markedBombsX-=1) : null 
     }
     setField(fieldX)
   }
@@ -133,9 +131,9 @@ export default function Home() {
       <span className='mainSpan'>«САПЕР ОФФЛАЙН»</span>
       <form className='gameForm' onSubmit={fillState}>
         <div className='gameDiv'>
-          <input className='gameInput' autoComplete="off" onChange={(e)=>setSizeX(Number(e.target.value))}></input>
+          <input className='gameInput' autoComplete="off" onChange={(e)=>setSize({...size, X: Number(e.target.value)})}></input>
           <span className='gameSpan'>X</span>
-          <input className='gameInput' autoComplete="off" onChange={(e)=>setSizeY(Number(e.target.value))}></input>
+          <input className='gameInput' autoComplete="off" onChange={(e)=>setSize({...size, Y: Number(e.target.value)})}></input>
         </div>
         <div className='gameDiv'>
           <span className='bombSpan'>БОМБ: </span>
