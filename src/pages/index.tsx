@@ -28,7 +28,7 @@ export default function Home() {
     setFlags(0)
     setMarkedBombs(0)
     setError("")
-    if ((size.X * size.Y) > bombs) {
+    if ((size.X * size.Y) > bombs && bombs > 0) {
       const fieldX:any = []
       let idX:number = 0
       let idY:number = 0
@@ -55,8 +55,10 @@ export default function Home() {
       console.log(bombs)
     } else if (size.X * size.Y === bombs) {
       setError("Ошибка: минимум одна ячейка должна быть без бомбы")
-    } else {
+    } else if (size.X * size.Y < bombs) {
       setError("Ошибка: бомб больше чем ячеек на поле")
+    } else if (bombs === 0) {
+      setError("Ошибка: должна быть минимум одна бомба")
     }
   }
 
