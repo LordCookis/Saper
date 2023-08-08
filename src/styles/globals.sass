@@ -4,6 +4,7 @@ body
   margin: 0px
   padding: 0px
   user-select: none
+  z-index: 0
 
 .mainPage
   display: flex
@@ -16,7 +17,7 @@ body
     font-family: monospace
     font-size: 35px
   .gameForm
-    margin: 15px
+    margin: 15px 15px 0px 15px
     display: flex
     flex-direction: column
     align-items: center
@@ -64,7 +65,8 @@ body
     display: flex
     justify-content: center
     flex-direction: column
-    .filedCellX
+    align-items: center
+    .fieldCellX
       display: flex
       flex-direction: row
       button
@@ -137,7 +139,47 @@ body
           color: #c6e6e9
       .flag
         color: #353535
-  .span
+        &:hover
+          color: #353535
+    .fieldSpan
+      margin: 0px 0px 15px 0px
+      color: #c6e6e9
+      font-size: 30px 
+  .errorSpan
     margin: 30px 
     color: #e66969
     font-size: 30px 
+
+.totalDiv
+  width: 700px
+  padding: 0px 0px 10px 0px
+  display: flex
+  flex-direction: column
+  justify-content: center
+  background-color: #0f0f0f
+  color: #c6e6e9
+  border: solid
+  border-radius: 5px
+  align-items: center
+  position: fixed
+  z-index: 9999
+  .win
+    color: #4bc04b
+    font-size: 100px
+  .lose
+    color: #e66969
+    font-size: 100px
+  .totalSpan
+    margin: 10px
+    font-size: 50px
+  .totalButton
+    margin: 10px
+    background-color: #0f0f0f
+    color: #c6e6e9
+    border: solid
+    border-radius: 5px
+    font-family: monospace
+    font-size: 50px
+    transition: 200ms
+    &:hover
+      color: #69dbe6

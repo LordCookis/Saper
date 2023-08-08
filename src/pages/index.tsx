@@ -1,21 +1,24 @@
 import { useEffect, useState } from 'react'
 import { services } from '@/services'
+import TotalResult from '@/components/TotalResult'
 let executed = false
 
 export default function Home() {
   const [field, setField] = useState<any>([])
   const [size, setSize] = useState<any>({X: 0, Y: 0})
-  //const [sizeX, setSizeX] = useState<number>(0)
-  //const [sizeY, setSizeY] = useState<number>(0)
   const [bombs, setBombs] = useState<number>(0)
   //const [executed, setExecuted] = useState<boolean>(false)
   const [flags, setFlags] = useState<number>(0)
   const [markedBombs, setMarkedBombs] = useState<number>(0)
+  const [win, setWin] = useState<number>(0)
   const [error, setError] = useState<string>("")
 
   useEffect(() => {
-    (markedBombs === bombs && flags === bombs) && (markedBombs > 0 && flags > 0) ? alert("ПОБЕДА") : null
-  }, [markedBombs, flags, bombs])
+    if ((markedBombs === bombs && flags === bombs) && (markedBombs > 0 && flags > 0)) {
+      setWin(1)
+    }
+    console.log(win)
+  }, [markedBombs, flags])
 
   const fillState = (e: any) => {
     e.preventDefault()
@@ -84,6 +87,7 @@ export default function Home() {
         fieldX.map((arrayX: any) => arrayX.array.map((cellX: any) => {
           cellX.bomb ? cellX.click = true : null
           cellX.flag ? cellX.flag = false : null
+          setWin(2)
         }))
       } else if (fieldX[idX].array[id].click === false) {
         if (services.saper.checkBomb(idX, id, fieldX)) {
@@ -111,7 +115,7 @@ export default function Home() {
     e.preventDefault()
     let flagsX:number = flags
     let markedBombsX:number = markedBombs
-    const fieldX = [...field]
+    const fieldX:any = [...field]
     if (!fieldX[idX].array[id].click && !fieldX[idX].array[id].flag) {
       fieldX[idX].array[id].flag = true
       setFlags(flagsX + 1)
@@ -125,6 +129,8 @@ export default function Home() {
     }
     setField(fieldX)
   }
+
+  const offContextMenu = () => { console.log(null) }
 
   return (
     <div className='mainPage'>
@@ -143,8 +149,9 @@ export default function Home() {
         <span className='errorSpan'>{error}</span>
       </form>
       <div className='fieldDiv'>
+        {field.length ? <span className='fieldSpan'>ОТМЕЧЕНО: {flags}</span> : null}
         {field?.map((cellX:any, indexX:number)=>(
-          <div className='filedCellX' key={cellX.id}>
+          <div className='fieldCellX' key={cellX.id} onContextMenu={offContextMenu}>
           {cellX?.array?.map((cell:any, index: number)=>(
             <button className={`${cell.click && cell.bomb ? 'bomb' : ''} 
             ${cell.click && cell.countBomb === 0 ? 'click' : 
@@ -157,11 +164,24 @@ export default function Home() {
             cell.click && cell.countBomb === 7 ? 'seven' : 
             cell.click && cell.countBomb === 8 ? 'eight' : 
             cell.flag === true ? 'flag' :
-            null}`} key={cell.id} onClick={(e)=>cellClick(indexX, index)} onContextMenu={(e)=>putFlag(e, indexX, index)}>{cell.countBomb}</button>
+            null}`} key={cell.id} onClick={(e)=>cellClick(indexX, index)} onContextMenu={(e)=>putFlag(e, indexX, index)}>{cell.countBomb ? cell.countBomb : null}</button>
           ))}
           </div>
         ))}
       </div>
+      {win === 1 ? <TotalResult
+        setField={setField}
+        setWin={setWin}
+        win={win}
+        size={size}
+        bombs={bombs}
+      /> : win === 2 ? <TotalResult
+        setField={setField}
+        setWin={setWin}
+        win={win}
+        size={size}
+        bombs={bombs}
+      /> : null}
     </div>
   )
 }
