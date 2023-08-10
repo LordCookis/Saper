@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
 import { services } from '@/services'
 import TotalResult from '@/components/TotalResult'
-let executed = false
+let executed:boolean = false
 
 export default function Home() {
   const [field, setField] = useState<any>([])
-  const [size, setSize] = useState<any>({X: 0, Y: 0})
+  interface Size {
+    X: number,
+    Y: number
+  }
+  const [size, setSize] = useState<Size>({X: 0, Y: 0})
   const [bombs, setBombs] = useState<number>(0)
   const [flags, setFlags] = useState<number>(0)
   const [markedBombs, setMarkedBombs] = useState<number>(0)
@@ -24,8 +28,20 @@ export default function Home() {
     executed = false
     setFlags(0)
     setMarkedBombs(0)
-    setError("")
-    if ((size.X * size.Y) > bombs && bombs > 0) {
+    if (isNaN(size.X) || isNaN(size.Y)) {
+      setError("Ошибка: размер поля должен быть числом")
+    } else if (!size.X || !size.Y) {
+      setError("Ошибка: размер поля не указан")
+    } else if (isNaN(bombs)) {
+      setError("Ошибка: количество бомб должно быть числом")
+    } else if (size.X * size.Y === bombs) {
+      setError("Ошибка: минимум одна ячейка должна быть без бомбы")
+    } else if (size.X * size.Y < bombs) {
+      setError("Ошибка: бомб больше чем ячеек на поле")
+    } else if (bombs === 0) {
+      setError("Ошибка: должна быть минимум одна бомба")
+    } else {
+      setError("")
       const fieldX:any = []
       let idX:number = 0
       let idY:number = 0
@@ -49,32 +65,44 @@ export default function Home() {
       }
       setField(fieldX)
       console.log(fieldX)
-    } else if (size.X * size.Y === bombs) {
-      setError("Ошибка: минимум одна ячейка должна быть без бомбы")
-    } else if (size.X * size.Y < bombs) {
-      setError("Ошибка: бомб больше чем ячеек на поле")
-    } else if (bombs === 0) {
-      setError("Ошибка: должна быть минимум одна бомба")
-    }
+    } 
   }
 
   const randomBomb = (idX: number, id: number) => {
-    const arrayBombs:any = []
+    //const arrayBombs:any = []
+    //while (arrayBombs.length < bombs) {
+    //  const randomCell = Math.floor(Math.random() * ((size.X * size.Y) + 1))
+    //  console.log(field[idX].array[id].id)
+    //  if (randomCell !== field[idX].array[id].id && !arrayBombs.includes(randomCell)) {
+    //    arrayBombs.push(randomCell)
+    //  }
+    //}
+    //const fieldX:any = [...field]
+    //for (let bombId of arrayBombs) {
+    //  fieldX.map((arrayX: any) => arrayX.array.map((cell: any) => cell.id === bombId ? cell.bomb = true : null))
+    //}
+    //setField(fieldX)
+
+    const arrayBombs:number[] = []
     while (arrayBombs.length < bombs) {
-      const randomCell = Math.floor(Math.random() * ((size.X * size.Y) + 1))
-      console.log(field[idX].array[id].id)
+      const randomCell = Math.floor(Math.random() * (size.X * size.Y));
       if (randomCell !== field[idX].array[id].id && !arrayBombs.includes(randomCell)) {
         arrayBombs.push(randomCell)
       }
     }
-    const fieldX:any = [...field]
-    for (let bombId of arrayBombs) {
-      fieldX.map((arrayX: any) => arrayX.array.map((cell: any) => cell.id === bombId ? cell.bomb = true : null))
-    }
+    const fieldX = [...field]
+    arrayBombs.forEach(bombId => {
+      fieldX.forEach(arrayX => 
+        arrayX.array.forEach(cell => {
+          if (cell.id === bombId) {
+            cell.bomb = true
+          }
+      }))
+    })
     setField(fieldX)
   }
 
-  const cellClick = async (idX: number, id: number) => {
+  const cellClick = (idX: number, id: number) => {
     if (!executed) {
       executed = true
       randomBomb(idX, id)
@@ -149,7 +177,7 @@ export default function Home() {
       <div className='fieldDiv'>
         {field.length ? <span className='fieldSpan'>ОТМЕЧЕНО: {flags}</span> : null}
         {field?.map((cellX:any, indexX:number)=>(
-          <div className='fieldCellX' key={cellX.id} onContextMenu={(e)=>{e.preventDefault}}>
+          <div className='fieldCellX' key={cellX.id} onContextMenu={(e)=>{e.preventDefault()}}>
           {cellX?.array?.map((cell:any, index: number)=>(
             <button className={`${cell.click && cell.bomb ? 'bomb' : ''} 
             ${cell.click && cell.countBomb === 0 ? 'click' : 
@@ -167,13 +195,7 @@ export default function Home() {
           </div>
         ))}
       </div>
-      {win === 1 ? <TotalResult
-        setField={setField}
-        setWin={setWin}
-        win={win}
-        size={size}
-        bombs={bombs}
-      /> : win === 2 ? <TotalResult
+      {win > 0 ? <TotalResult
         setField={setField}
         setWin={setWin}
         win={win}
