@@ -1,20 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { services } from '@/services'
 import TotalResult from '@/components/TotalResult'
-let executed:boolean = false
+//let executed:boolean = false
 
 export default function Home() {
   const [field, setField] = useState<any>([])
-  interface Size {
-    X: number,
-    Y: number
-  }
+  interface Size {X: number, Y: number}
   const [size, setSize] = useState<Size>({X: 0, Y: 0})
   const [bombs, setBombs] = useState<number>(0)
+  const executed = useRef<boolean>(false)
   const [flags, setFlags] = useState<number>(0)
   const [markedBombs, setMarkedBombs] = useState<number>(0)
   const [win, setWin] = useState<number>(0)
   const [error, setError] = useState<string>("")
+  const [time, setTime] = useState<number>(0)
+  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false)
 
   useEffect(() => {
     if ((markedBombs === bombs && flags === bombs) && (markedBombs > 0 && flags > 0)) {
@@ -22,12 +22,13 @@ export default function Home() {
     }
   }, [markedBombs, flags])
 
-  const fillState = (e: any) => {
+  const fillState = (e:any) => {
     e.preventDefault()
     setField([])
-    executed = false
+    executed.current  = false
     setFlags(0)
     setMarkedBombs(0)
+    setIsTimerRunning(false)
     if (isNaN(size.X) || isNaN(size.Y)) {
       setError("Ошибка: размер поля должен быть числом")
     } else if (!size.X || !size.Y) {
@@ -64,25 +65,11 @@ export default function Home() {
         idX++
       }
       setField(fieldX)
-      console.log(fieldX)
-    } 
+      startTimer(time)
+    }
   }
 
-  const randomBomb = (idX: number, id: number) => {
-    //const arrayBombs:any = []
-    //while (arrayBombs.length < bombs) {
-    //  const randomCell = Math.floor(Math.random() * ((size.X * size.Y) + 1))
-    //  console.log(field[idX].array[id].id)
-    //  if (randomCell !== field[idX].array[id].id && !arrayBombs.includes(randomCell)) {
-    //    arrayBombs.push(randomCell)
-    //  }
-    //}
-    //const fieldX:any = [...field]
-    //for (let bombId of arrayBombs) {
-    //  fieldX.map((arrayX: any) => arrayX.array.map((cell: any) => cell.id === bombId ? cell.bomb = true : null))
-    //}
-    //setField(fieldX)
-
+  const randomBomb = (idX:number, id:number) => {
     const arrayBombs:number[] = []
     while (arrayBombs.length < bombs) {
       const randomCell = Math.floor(Math.random() * (size.X * size.Y));
@@ -93,7 +80,7 @@ export default function Home() {
     const fieldX = [...field]
     arrayBombs.forEach(bombId => {
       fieldX.forEach(arrayX => 
-        arrayX.array.forEach(cell => {
+        arrayX.array.forEach((cell: {id:number, bomb:boolean}) => {
           if (cell.id === bombId) {
             cell.bomb = true
           }
@@ -102,9 +89,26 @@ export default function Home() {
     setField(fieldX)
   }
 
-  const cellClick = (idX: number, id: number) => {
-    if (!executed) {
-      executed = true
+  const startTimer = (t: number) => {
+    setIsTimerRunning(true)
+    setTime(t)
+    const timerInterval = setInterval(() => {
+      setTime(prevTime => {
+        if (prevTime <= 0) {
+          clearInterval(timerInterval)
+          setIsTimerRunning(false)
+          setWin(2)
+          return 0
+        } else {
+          return prevTime - 1
+        }
+      })
+    }, 1000)
+  }
+
+  const cellClick = (idX:number, id:number) => {
+    if (!executed.current) {
+      executed.current = true
       randomBomb(idX, id)
     }
     if (field[idX]?.array[id]?.flag === false) {
@@ -139,7 +143,7 @@ export default function Home() {
     }
   }
 
-  const putFlag = (e: any, idX: number, id: number) => {
+  const putFlag = (e:any, idX:number, id:number) => {
     e.preventDefault()
     let flagsX:number = flags
     let markedBombsX:number = markedBombs
@@ -161,7 +165,7 @@ export default function Home() {
   return (
     <div className='mainPage'>
       <span className='mainSpan'>«САПЕР ОФФЛАЙН»</span>
-      <form className='gameForm' onSubmit={fillState}>
+      <div className='gameForm' >
         <div className='gameDiv'>
           <input className='gameInput' autoComplete="off" onChange={(e)=>setSize({...size, X: Number(e.target.value)})}></input>
           <span className='gameSpan'>X</span>
@@ -171,11 +175,16 @@ export default function Home() {
           <span className='bombSpan'>БОМБ: </span>
           <input className='gameInput' autoComplete="off" onChange={(e)=>setBombs(Number(e.target.value))}></input>
         </div>
-        <button className='gameButton'>НАЧАТЬ ИГРУ</button>
+        <div className='gameDiv'>
+          <span className='bombSpan'>ВРЕМЯ: </span>
+          <input className='gameTime' autoComplete="off" onChange={(e)=>setTime(Number(e.target.value))}></input>
+        </div>
+        <button className='gameButton' onClick={fillState}>НАЧАТЬ ИГРУ</button>
         <span className='errorSpan'>{error}</span>
-      </form>
+      </div>
       <div className='fieldDiv'>
         {field.length ? <span className='fieldSpan'>ОТМЕЧЕНО: {flags}</span> : null}
+        {field.length ? <span className='fieldSpan'>ОСТАЛОСЬ: {time}с</span> : null}
         {field?.map((cellX:any, indexX:number)=>(
           <div className='fieldCellX' key={cellX.id} onContextMenu={(e)=>{e.preventDefault()}}>
           {cellX?.array?.map((cell:any, index: number)=>(
