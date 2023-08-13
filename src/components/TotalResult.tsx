@@ -1,7 +1,12 @@
-export default function TotalResult({setField, setWin, win, size, bombs}:any) {
+export default function TotalResult({gameStart, setField, win, executed, setFlags, setMarkedBombs, timerWork, size, bombs}:any) {
   const newGame = () => {
+    gameStart.current = false
     setField([])
-    setWin(0)
+    win.current = 0
+    executed.current = false
+    setFlags(0)
+    setMarkedBombs(0)
+    timerWork.current = false
   }
 
   return(

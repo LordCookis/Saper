@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { services } from '@/services'
 import TotalResult from '@/components/TotalResult'
-//let executed:boolean = false
 
 export default function Home() {
   const [field, setField] = useState<any>([])
@@ -11,24 +10,32 @@ export default function Home() {
   const executed = useRef<boolean>(false)
   const [flags, setFlags] = useState<number>(0)
   const [markedBombs, setMarkedBombs] = useState<number>(0)
-  const [win, setWin] = useState<number>(0)
+  const win = useRef<number>(0)
   const [error, setError] = useState<string>("")
-  const [time, setTime] = useState<number>(0)
-  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false)
+  interface Time {Start: number, Last: number}
+  const [time, setTime] = useState<Time>({Start: 0, Last: 0})
+  const [timeX, setTimeX] = useState<Time>({Start: 0, Last: 0})
+  const timerWork = useRef<boolean>(false)
+  const gameStart = useRef(false)
 
   useEffect(() => {
     if ((markedBombs === bombs && flags === bombs) && (markedBombs > 0 && flags > 0)) {
-      setWin(1)
+      win.current = 1
     }
   }, [markedBombs, flags])
 
   const fillState = (e:any) => {
     e.preventDefault()
+    if (gameStart.current) {
+      return
+    }
+    setTime(timeX)
+    gameStart.current = true
     setField([])
     executed.current  = false
     setFlags(0)
     setMarkedBombs(0)
-    setIsTimerRunning(false)
+    time.Last !== 0 && time.Start === 0 ? setTime({...time, Start: time.Last}) : null
     if (isNaN(size.X) || isNaN(size.Y)) {
       setError("Ошибка: размер поля должен быть числом")
     } else if (!size.X || !size.Y) {
@@ -65,7 +72,6 @@ export default function Home() {
         idX++
       }
       setField(fieldX)
-      startTimer(time)
     }
   }
 
@@ -89,27 +95,32 @@ export default function Home() {
     setField(fieldX)
   }
 
-  const startTimer = (t: number) => {
-    setIsTimerRunning(true)
-    setTime(t)
-    const timerInterval = setInterval(() => {
+  const startTimer = () => {
+    const timer = setInterval(() => {
       setTime(prevTime => {
-        if (prevTime <= 0) {
-          clearInterval(timerInterval)
-          setIsTimerRunning(false)
-          setWin(2)
-          return 0
-        } else {
-          return prevTime - 1
+        if (win.current > 0) {
+          clearInterval(timer)
+          return {...prevTime, Start: prevTime.Last}
+        } else if (prevTime.Start === 0 && executed.current && timerWork.current) {
+          clearInterval(timer)
+          win.current = 2
+          timerWork.current = false
+          return {...prevTime}
+        } else if (timerWork.current) {
+          return {...prevTime, Start: prevTime.Start - 1}
         }
       })
     }, 1000)
+    setTimeX(time)
   }
 
   const cellClick = (idX:number, id:number) => {
     if (!executed.current) {
       executed.current = true
       randomBomb(idX, id)
+      setTime({...time, Last: time.Start})
+      timerWork.current = true
+      startTimer()
     }
     if (field[idX]?.array[id]?.flag === false) {
       const fieldX:any = [...field]
@@ -118,7 +129,7 @@ export default function Home() {
           fieldX.map((arrayX: any) => arrayX.array.map((cellX: any) => {
             cellX.bomb ? cellX.click = true : null
             cellX.flag ? cellX.flag = false : null
-            setWin(2)
+            win.current = 2
           }))
         } else if (fieldX[idX].array[id].click === false) {
           if (services.saper.checkBomb(idX, id, fieldX)) {
@@ -164,7 +175,7 @@ export default function Home() {
 
   return (
     <div className='mainPage'>
-      <span className='mainSpan'>«САПЕР ОФФЛАЙН»</span>
+      <span className='mainSpan'>«РАЗРЫВНАЯ»</span>
       <div className='gameForm' >
         <div className='gameDiv'>
           <input className='gameInput' autoComplete="off" onChange={(e)=>setSize({...size, X: Number(e.target.value)})}></input>
@@ -177,14 +188,16 @@ export default function Home() {
         </div>
         <div className='gameDiv'>
           <span className='bombSpan'>ВРЕМЯ: </span>
-          <input className='gameTime' autoComplete="off" onChange={(e)=>setTime(Number(e.target.value))}></input>
+          <input className='gameTime' autoComplete="off" onChange={(e)=>setTimeX({...time, Start: Number(e.target.value)})}></input>
         </div>
         <button className='gameButton' onClick={fillState}>НАЧАТЬ ИГРУ</button>
         <span className='errorSpan'>{error}</span>
       </div>
       <div className='fieldDiv'>
-        {field.length ? <span className='fieldSpan'>ОТМЕЧЕНО: {flags}</span> : null}
-        {field.length ? <span className='fieldSpan'>ОСТАЛОСЬ: {time}с</span> : null}
+        <div className='fieldInfo'>
+          {field.length ? <span className='fieldSpan'>ОТМЕЧЕНО: {flags}</span> : null}
+          {field.length ? <span className='fieldSpan'>ОСТАЛОСЬ: {time.Start}с</span> : null}
+        </div>
         {field?.map((cellX:any, indexX:number)=>(
           <div className='fieldCellX' key={cellX.id} onContextMenu={(e)=>{e.preventDefault()}}>
           {cellX?.array?.map((cell:any, index: number)=>(
@@ -199,15 +212,19 @@ export default function Home() {
             cell.click && cell.countBomb === 7 ? 'seven' : 
             cell.click && cell.countBomb === 8 ? 'eight' : 
             cell.flag === true ? 'flag' :
-            null}`} key={cell.id} onClick={(e)=>cellClick(indexX, index)} onContextMenu={(e)=>putFlag(e, indexX, index)}>{cell.countBomb ? cell.countBomb : null}</button>
+            null}`} key={cell.id} onClick={()=>cellClick(indexX, index)} onContextMenu={(e)=>putFlag(e, indexX, index)}>{cell.countBomb ? cell.countBomb : null}</button>
           ))}
           </div>
         ))}
       </div>
-      {win > 0 ? <TotalResult
+      {win.current > 0 ? <TotalResult
+        gameStart={gameStart}
         setField={setField}
-        setWin={setWin}
         win={win}
+        executed={executed}
+        setFlags={setFlags}
+        setMarkedBombs={setMarkedBombs}
+        timerWork={timerWork}
         size={size}
         bombs={bombs}
       /> : null}
