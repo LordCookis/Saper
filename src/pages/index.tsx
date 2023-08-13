@@ -100,11 +100,12 @@ export default function Home() {
       setTime(prevTime => {
         if (win.current > 0) {
           clearInterval(timer)
-          return {...prevTime, Start: prevTime.Last}
+          return {...prevTime}
         } else if (prevTime.Start === 0 && executed.current && timerWork.current) {
           clearInterval(timer)
           win.current = 2
           timerWork.current = false
+          console.log(time.Start)
           return {...prevTime}
         } else if (timerWork.current) {
           return {...prevTime, Start: prevTime.Start - 1}
@@ -222,11 +223,11 @@ export default function Home() {
         setField={setField}
         win={win}
         executed={executed}
-        setFlags={setFlags}
-        setMarkedBombs={setMarkedBombs}
         timerWork={timerWork}
         size={size}
         bombs={bombs}
+        timeX={timeX}
+        time={time}
       /> : null}
     </div>
   )
