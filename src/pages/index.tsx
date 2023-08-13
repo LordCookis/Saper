@@ -29,13 +29,6 @@ export default function Home() {
     if (gameStart.current) {
       return
     }
-    setTime(timeX)
-    gameStart.current = true
-    setField([])
-    executed.current  = false
-    setFlags(0)
-    setMarkedBombs(0)
-    time.Last !== 0 && time.Start === 0 ? setTime({...time, Start: time.Last}) : null
     if (isNaN(size.X) || isNaN(size.Y)) {
       setError("Ошибка: размер поля должен быть числом")
     } else if (!size.X || !size.Y) {
@@ -46,9 +39,20 @@ export default function Home() {
       setError("Ошибка: минимум одна ячейка должна быть без бомбы")
     } else if (size.X * size.Y < bombs) {
       setError("Ошибка: бомб больше чем ячеек на поле")
-    } else if (bombs === 0) {
+    } else if (bombs < 1) {
       setError("Ошибка: должна быть минимум одна бомба")
+    } else if (isNaN(timeX.Start)) {
+      setError("Ошибка: количество секунд должно быть числом")
+    } else if (timeX.Start < 1) {
+      setError("Ошибка: таймер должен длиться минимум лдну секунду")
     } else {
+      setTime(timeX)
+      gameStart.current = true
+      setField([])
+      executed.current  = false
+      setFlags(0)
+      setMarkedBombs(0)
+      time.Last !== 0 && time.Start === 0 ? setTime({...time, Start: time.Last}) : null
       setError("")
       const fieldX:any = []
       let idX:number = 0
@@ -115,6 +119,43 @@ export default function Home() {
     setTimeX(time)
   }
 
+  //const cellClick = (idX:number, id:number) => {
+  //  if (!executed.current) {
+  //    executed.current = true
+  //    randomBomb(idX, id)
+  //    setTime({...time, Last: time.Start})
+  //    timerWork.current = true
+  //    startTimer()
+  //  }
+  //  if (!field[idX]?.array[id]?.flag) {
+  //    const fieldX:any = [...field]
+  //    if (!(idX < 0 || idX >= fieldX.length || id < 0 || id >= fieldX[idX].length) && fieldX[idX]?.array[id]?.click === false) {
+  //      if (fieldX[idX]?.array[id]?.bomb) {
+  //        fieldX.map((arrayX: any) => arrayX.array.map((cellX: any) => {
+  //          cellX.bomb ? cellX.click = true : null
+  //          cellX.flag ? cellX.flag = false : null
+  //          win.current = 2
+  //        }))
+  //      } else if (!fieldX[idX].array[id].click) {
+  //        if (services.saper.checkBomb(idX, id, fieldX)) {
+  //          fieldX[idX].array[id].countBomb = services.saper.checkBomb(idX, id, fieldX)
+  //        } else {
+  //          cellClick(idX - 1, id - 1)
+  //          cellClick(idX - 1, id)
+  //          cellClick(idX - 1, id + 1)
+  //          cellClick(idX, id - 1)
+  //          cellClick(idX, id + 1)
+  //          cellClick(idX + 1, id - 1)
+  //          cellClick(idX + 1, id)
+  //          cellClick(idX + 1, id + 1)
+  //        }
+  //      }
+  //      fieldX[idX].array[id].click = true
+  //    }
+  //    setField(fieldX)
+  //  }
+  //}
+
   const cellClick = (idX:number, id:number) => {
     if (!executed.current) {
       executed.current = true
@@ -123,7 +164,7 @@ export default function Home() {
       timerWork.current = true
       startTimer()
     }
-    if (field[idX]?.array[id]?.flag === false) {
+    if (!field[idX]?.array[id]?.flag) {
       const fieldX:any = [...field]
       if (!(idX < 0 || idX >= fieldX.length || id < 0 || id >= fieldX[idX].length) && fieldX[idX]?.array[id]?.click === false) {
         if (fieldX[idX]?.array[id]?.bomb === true) {
@@ -136,17 +177,15 @@ export default function Home() {
           if (services.saper.checkBomb(idX, id, fieldX)) {
             fieldX[idX].array[id].countBomb = services.saper.checkBomb(idX, id, fieldX)
           } else {
-            if (fieldX[idX].array[id].countBomb === 0) {
-              fieldX[idX].array[id].click = true
-              cellClick(idX - 1, id - 1)
-              cellClick(idX - 1, id)
-              cellClick(idX - 1, id + 1)
-              cellClick(idX, id - 1)
-              cellClick(idX, id + 1)
-              cellClick(idX + 1, id - 1)
-              cellClick(idX + 1, id)
-              cellClick(idX + 1, id + 1)
-            }
+            fieldX[idX].array[id].click = true
+            cellClick(idX - 1, id - 1)
+            cellClick(idX - 1, id)
+            cellClick(idX - 1, id + 1)
+            cellClick(idX, id - 1)
+            cellClick(idX, id + 1)
+            cellClick(idX + 1, id - 1)
+            cellClick(idX + 1, id)
+            cellClick(idX + 1, id + 1)
           }
         }
         fieldX[idX].array[id].click = true
@@ -157,21 +196,23 @@ export default function Home() {
 
   const putFlag = (e:any, idX:number, id:number) => {
     e.preventDefault()
-    let flagsX:number = flags
-    let markedBombsX:number = markedBombs
-    const fieldX:any = [...field]
-    if (!fieldX[idX].array[id].click && !fieldX[idX].array[id].flag) {
-      fieldX[idX].array[id].flag = true
-      setFlags(flagsX + 1)
-      fieldX[idX].array[id].countBomb = 'F'
-      fieldX[idX].array[id].bomb === true ? setMarkedBombs(markedBombsX += 1) : null
-    } else if (!fieldX[idX].array[id].click && fieldX[idX].array[id].flag) {
-      fieldX[idX].array[id].flag = false
-      setFlags(flagsX - 1)
-      fieldX[idX].array[id].countBomb = 0
-      fieldX[idX].array[id].bomb === true ? setMarkedBombs(markedBombsX-=1) : null 
+    if (!field[idX].array[id].click && executed.current) {
+      let flagsX:number = flags
+      let markedBombsX:number = markedBombs
+      const fieldX:any = [...field]
+      if (fieldX[idX].array[id].flag) {
+        fieldX[idX].array[id].flag = false
+        setFlags(flagsX - 1)
+        fieldX[idX].array[id].countBomb = 0
+        fieldX[idX].array[id].bomb === true ? setMarkedBombs(markedBombsX -= 1) : null 
+      } else {
+        fieldX[idX].array[id].flag = true
+        setFlags(flagsX + 1)
+        fieldX[idX].array[id].countBomb = 'F'
+        fieldX[idX].array[id].bomb === true ? setMarkedBombs(markedBombsX += 1) : null
+      }
+      setField(fieldX)
     }
-    setField(fieldX)
   }
 
   return (

@@ -1,5 +1,5 @@
 export const saperServices = {
-  checkBomb(idX: number, id: number, fieldX: any) {
+  checkBomb(idX:number, id:number, fieldX:any) {
     let countBomb = 0
     if (fieldX[idX-1]?.array[id-1]?.bomb === true) {
       countBomb++
@@ -26,5 +26,5 @@ export const saperServices = {
       countBomb++
     }
     return countBomb
-  },
+  }
 }
