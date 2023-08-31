@@ -11,22 +11,23 @@ export default function Home() {
   const [flags, setFlags] = useState<number>(0)
   const [markedBombs, setMarkedBombs] = useState<number>(0)
   const win = useRef<number>(0)
+  const [x, setX] = useState<number>(0)
   const [error, setError] = useState<string>("")
-  interface Time {Start: number, Last: number}
-  const [time, setTime] = useState<Time>({Start: 0, Last: 0})
-  const [timeX, setTimeX] = useState<Time>({Start: 0, Last: 0})
+  const [time, setTime] = useState<number>(0)
+  const [timeX, setTimeX] = useState<number>(0)
   const timerWork = useRef<boolean>(false)
-  const gameStart = useRef(false)
+  const gameStart = useRef<boolean>(false)
 
   useEffect(() => {
     if ((markedBombs === bombs && flags === bombs) && (markedBombs > 0 && flags > 0)) {
       win.current = 1
+      setX(1)
     }
   }, [markedBombs, flags])
 
   const fillState = (e:any) => {
     e.preventDefault()
-    if (gameStart.current) {
+    if (gameStart.current && executed.current) {
       return
     }
     if (isNaN(size.X) || isNaN(size.Y)) {
@@ -41,18 +42,17 @@ export default function Home() {
       setError("Ошибка: бомб больше чем ячеек на поле")
     } else if (bombs < 1) {
       setError("Ошибка: должна быть минимум одна бомба")
-    } else if (isNaN(timeX.Start)) {
+    } else if (isNaN(timeX)) {
       setError("Ошибка: количество секунд должно быть числом")
-    } else if (timeX.Start < 1) {
-      setError("Ошибка: таймер должен длиться минимум лдну секунду")
+    } else if (timeX < 1) {
+      setError("Ошибка: таймер должен длиться минимум одну секунду")
     } else {
-      setTime(timeX)
       gameStart.current = true
       setField([])
+      setTime(timeX)
       executed.current  = false
       setFlags(0)
       setMarkedBombs(0)
-      time.Last !== 0 && time.Start === 0 ? setTime({...time, Start: time.Last}) : null
       setError("")
       const fieldX:any = []
       let idX:number = 0
@@ -90,7 +90,7 @@ export default function Home() {
     const fieldX = [...field]
     arrayBombs.forEach(bombId => {
       fieldX.forEach(arrayX => 
-        arrayX.array.forEach((cell: {id:number, bomb:boolean}) => {
+        arrayX.array.forEach((cell:{id:number, bomb:boolean}) => {
           if (cell.id === bombId) {
             cell.bomb = true
           }
@@ -104,63 +104,26 @@ export default function Home() {
       setTime(prevTime => {
         if (win.current > 0) {
           clearInterval(timer)
-          return {...prevTime}
-        } else if (prevTime.Start === 0 && executed.current && timerWork.current) {
+          return prevTime
+        } else if (prevTime === 0 && executed.current && timerWork.current) {
           clearInterval(timer)
           win.current = 2
+          setX(2)
           timerWork.current = false
-          console.log(time.Start)
-          return {...prevTime}
+          return prevTime
         } else if (timerWork.current) {
-          return {...prevTime, Start: prevTime.Start - 1}
+          return prevTime - 1
         }
       })
     }, 1000)
     setTimeX(time)
   }
 
-  //const cellClick = (idX:number, id:number) => {
-  //  if (!executed.current) {
-  //    executed.current = true
-  //    randomBomb(idX, id)
-  //    setTime({...time, Last: time.Start})
-  //    timerWork.current = true
-  //    startTimer()
-  //  }
-  //  if (!field[idX]?.array[id]?.flag) {
-  //    const fieldX:any = [...field]
-  //    if (!(idX < 0 || idX >= fieldX.length || id < 0 || id >= fieldX[idX].length) && fieldX[idX]?.array[id]?.click === false) {
-  //      if (fieldX[idX]?.array[id]?.bomb) {
-  //        fieldX.map((arrayX: any) => arrayX.array.map((cellX: any) => {
-  //          cellX.bomb ? cellX.click = true : null
-  //          cellX.flag ? cellX.flag = false : null
-  //          win.current = 2
-  //        }))
-  //      } else if (!fieldX[idX].array[id].click) {
-  //        if (services.saper.checkBomb(idX, id, fieldX)) {
-  //          fieldX[idX].array[id].countBomb = services.saper.checkBomb(idX, id, fieldX)
-  //        } else {
-  //          cellClick(idX - 1, id - 1)
-  //          cellClick(idX - 1, id)
-  //          cellClick(idX - 1, id + 1)
-  //          cellClick(idX, id - 1)
-  //          cellClick(idX, id + 1)
-  //          cellClick(idX + 1, id - 1)
-  //          cellClick(idX + 1, id)
-  //          cellClick(idX + 1, id + 1)
-  //        }
-  //      }
-  //      fieldX[idX].array[id].click = true
-  //    }
-  //    setField(fieldX)
-  //  }
-  //}
-
   const cellClick = (idX:number, id:number) => {
     if (!executed.current) {
       executed.current = true
       randomBomb(idX, id)
-      setTime({...time, Last: time.Start})
+      setTime(timeX)
       timerWork.current = true
       startTimer()
     }
@@ -172,6 +135,7 @@ export default function Home() {
             cellX.bomb ? cellX.click = true : null
             cellX.flag ? cellX.flag = false : null
             win.current = 2
+            setX(2)
           }))
         } else if (fieldX[idX].array[id].click === false) {
           if (services.saper.checkBomb(idX, id, fieldX)) {
@@ -230,7 +194,7 @@ export default function Home() {
         </div>
         <div className='gameDiv'>
           <span className='bombSpan'>ВРЕМЯ: </span>
-          <input className='gameTime' autoComplete="off" onChange={(e)=>setTimeX({...time, Start: Number(e.target.value)})}></input>
+          <input className='gameTime' autoComplete="off" onChange={!gameStart.current ? (e)=>setTimeX(Number(e.target.value)) : null}></input>
         </div>
         <button className='gameButton' onClick={fillState}>НАЧАТЬ ИГРУ</button>
         <span className='errorSpan'>{error}</span>
@@ -238,7 +202,7 @@ export default function Home() {
       <div className='fieldDiv'>
         <div className='fieldInfo'>
           {field.length ? <span className='fieldSpan'>ОТМЕЧЕНО: {flags}</span> : null}
-          {field.length ? <span className='fieldSpan'>ОСТАЛОСЬ: {time.Start}с</span> : null}
+          {field.length ? <span className='fieldSpan'>ОСТАЛОСЬ: {time}с</span> : null}
         </div>
         {field?.map((cellX:any, indexX:number)=>(
           <div className='fieldCellX' key={cellX.id} onContextMenu={(e)=>{e.preventDefault()}}>
@@ -259,7 +223,7 @@ export default function Home() {
           </div>
         ))}
       </div>
-      {win.current > 0 ? <TotalResult
+      {win.current > 0 || x > 0 ? <TotalResult
         gameStart={gameStart}
         setField={setField}
         win={win}
@@ -269,6 +233,7 @@ export default function Home() {
         bombs={bombs}
         timeX={timeX}
         time={time}
+        setX={setX}
       /> : null}
     </div>
   )

@@ -1,4 +1,4 @@
-export default function TotalResult({gameStart, setField, win, executed, timerWork, size, bombs, timeX, time}:any) {
+export default function TotalResult({gameStart, setField, win, executed, timerWork, size, bombs, timeX, time, setX}:any) {
   const newGame = () => {
       setTimeout(() => {
       gameStart.current = false
@@ -6,10 +6,11 @@ export default function TotalResult({gameStart, setField, win, executed, timerWo
       win.current = 0
       executed.current = false
       timerWork.current = false
+      setX(0)
     }, 100)
   }
 
-  const timeSpent = `${Math.floor((timeX.Start - time.Start) / 60)}:${((timeX.Start - time.Start) % 60).toString().padStart(2, '0')}`
+  const timeSpent = `${Math.floor((timeX - time) / 60)}:${((timeX - time) % 60).toString().padStart(2, '0')}`
 
   return(
     <div className="totalDiv">
