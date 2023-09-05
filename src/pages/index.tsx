@@ -14,13 +14,14 @@ export default function Home() {
   const [win, setWin] = useState<number>(0)
   const [error, setError] = useState<string>("")
   const [time, setTime] = useState<number>(0)
-  const [timeX, setTimeX] = useState<number>(0)
+  const timeX = useRef<number>(0)
   const timerWork = useRef<boolean>(false)
   const gameStart = useRef<boolean>(false)
 
   useEffect(() => {
     if ((markedBombs === bombs && flags === bombs) && (markedBombs > 0 && flags > 0)) {
       setWin(1)
+      winX.current = 1
     }
   }, [markedBombs, flags])
 
@@ -38,14 +39,14 @@ export default function Home() {
       setError("Ошибка: бомб больше чем ячеек на поле")
     } else if (bombs < 1) {
       setError("Ошибка: должна быть минимум одна бомба")
-    } else if (isNaN(timeX)) {
+    } else if (isNaN(timeX.current)) {
       setError("Ошибка: количество секунд должно быть числом")
     } else {
       setField([])
       executed.current = false
       setFlags(0)
       setMarkedBombs(0)
-      setTime(timeX)
+      setTime(timeX.current)
       timerWork.current = false
       setError("")
       const fieldX:any = []
@@ -110,7 +111,7 @@ export default function Home() {
           return prevTime - 1
         } else {
           clearInterval(timer)
-          return 0
+          return timeX.current
         }
       })
     }, 1000)
@@ -122,7 +123,7 @@ export default function Home() {
       gameStart.current = true
       executed.current = true
       randomBomb(idX, id)
-      if (timeX) {
+      if (timeX.current) {
         timerWork.current = true
         startTimer()
       }
@@ -135,6 +136,7 @@ export default function Home() {
             cellX.bomb ? cellX.click = true : null
             cellX.flag ? cellX.flag = false : null
             setWin(2)
+            winX.current = 2
           }))
         } else if (fieldX[idX].array[id].click === false) {
           if (services.saper.checkBomb(idX, id, fieldX)) {
@@ -179,24 +181,6 @@ export default function Home() {
     }
   }
 
-  const data = () => {
-    console.log("----------------------------------")
-    console.log("Поле: ", field)
-    console.log("Размер: ", size)
-    console.log("Бомб: ", bombs)
-    console.log("Нажатие: ", executed)
-    console.log("Флагов: ", flags)
-    console.log("Правильных бомб: ", markedBombs)
-    console.log("Итог игры: ", win)
-    console.log("Итог игры 2: ", winX)
-    console.log("Ошибка: ", error)
-    console.log("Вычисляемое время: ", time)
-    console.log("Назначеное время: ", timeX)
-    console.log("Таймер: ", timerWork)
-    console.log("Игра: ", gameStart)
-    console.log("----------------------------------")
-  }
-
   return (
     <div className='mainPage'>
       <span className='mainSpan'>«РАЗРЫВНАЯ»</span>
@@ -212,7 +196,7 @@ export default function Home() {
         </div>
         <div className='gameDiv'>
           <span className='bombSpan'>ВРЕМЯ: </span>
-          <input className='gameTime' autoComplete="off" onChange={!executed.current ? (e)=>setTimeX(Number(e.target.value)) : null}></input>
+          <input className='gameTime' autoComplete="off" onChange={(e)=>timeX.current = Number(e.target.value)}></input>
         </div>
         <button className='gameButton' onClick={fillState}>НАЧАТЬ ИГРУ</button>
         <span className='errorSpan'>{error}</span>
@@ -254,7 +238,6 @@ export default function Home() {
         timeX={timeX}
         time={time}
       /> : null}
-      <button onClick={data}>ДАННЫЕ</button>
     </div>
   )
 }

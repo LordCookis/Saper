@@ -10,7 +10,7 @@ export default function TotalResult({gameStart, setField, win, setWin, winX, exe
     }, 100)
   }
 
-  const timeSpent = `${Math.floor((timeX - time) / 60)}:${((timeX - time) % 60).toString().padStart(2, '0')}`
+  const timeSpent = `${Math.floor((timeX.current - time) / 60)}:${((timeX.current - time) % 60).toString().padStart(2, '0')}`
 
   return(
     <div className="totalDiv">
