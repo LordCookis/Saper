@@ -11,7 +11,6 @@ export default function Home() {
   const [flags, setFlags] = useState<number>(0)
   const [markedBombs, setMarkedBombs] = useState<number>(0)
   const win = useRef<number>(0)
-  const [x, setX] = useState<number>(0)
   const [error, setError] = useState<string>("")
   const [time, setTime] = useState<number>(0)
   const [timeX, setTimeX] = useState<number>(0)
@@ -21,15 +20,11 @@ export default function Home() {
   useEffect(() => {
     if ((markedBombs === bombs && flags === bombs) && (markedBombs > 0 && flags > 0)) {
       win.current = 1
-      setX(1)
     }
   }, [markedBombs, flags])
 
   const fillState = (e:any) => {
     e.preventDefault()
-    if (gameStart.current && executed.current) {
-      return
-    }
     if (isNaN(size.X) || isNaN(size.Y)) {
       setError("Ошибка: размер поля должен быть числом")
     } else if (!size.X || !size.Y) {
@@ -44,15 +39,13 @@ export default function Home() {
       setError("Ошибка: должна быть минимум одна бомба")
     } else if (isNaN(timeX)) {
       setError("Ошибка: количество секунд должно быть числом")
-    } else if (timeX < 1) {
-      setError("Ошибка: таймер должен длиться минимум одну секунду")
     } else {
-      gameStart.current = true
       setField([])
-      setTime(timeX)
-      executed.current  = false
+      executed.current = false
       setFlags(0)
       setMarkedBombs(0)
+      setTime(0)
+      timerWork.current = false
       setError("")
       const fieldX:any = []
       let idX:number = 0
@@ -104,28 +97,34 @@ export default function Home() {
       setTime(prevTime => {
         if (win.current > 0) {
           clearInterval(timer)
+          timerWork.current = false
           return prevTime
         } else if (prevTime === 0 && executed.current && timerWork.current) {
           clearInterval(timer)
           win.current = 2
-          setX(2)
           timerWork.current = false
           return prevTime
         } else if (timerWork.current) {
           return prevTime - 1
+        } else {
+          clearInterval(timer)
+          return 0
         }
       })
     }, 1000)
-    setTimeX(time)
   }
 
   const cellClick = (idX:number, id:number) => {
+    //if (win.current) { return }
     if (!executed.current) {
+      gameStart.current = true
       executed.current = true
       randomBomb(idX, id)
-      setTime(timeX)
-      timerWork.current = true
-      startTimer()
+      if (timeX) {
+        setTime(timeX)
+        timerWork.current = true
+        startTimer()
+      }
     }
     if (!field[idX]?.array[id]?.flag) {
       const fieldX:any = [...field]
@@ -135,7 +134,6 @@ export default function Home() {
             cellX.bomb ? cellX.click = true : null
             cellX.flag ? cellX.flag = false : null
             win.current = 2
-            setX(2)
           }))
         } else if (fieldX[idX].array[id].click === false) {
           if (services.saper.checkBomb(idX, id, fieldX)) {
@@ -159,6 +157,7 @@ export default function Home() {
   }
 
   const putFlag = (e:any, idX:number, id:number) => {
+    //if (win.current) { return }
     e.preventDefault()
     if (!field[idX].array[id].click && executed.current) {
       let flagsX:number = flags
@@ -177,6 +176,23 @@ export default function Home() {
       }
       setField(fieldX)
     }
+  }
+
+  const data = () => {
+    console.log("----------------------------------")
+    console.log("Поле: ", field)
+    console.log("Размер: ", size)
+    console.log("Бомб: ", bombs)
+    console.log("Нажатие: ", executed)
+    console.log("Флагов: ", flags)
+    console.log("Правильных бомб: ", markedBombs)
+    console.log("Итог игры: ", win)
+    console.log("Ошибка: ", error)
+    console.log("Вычисляемое время: ", time)
+    console.log("Назначеное время: ", timeX)
+    console.log("Таймер: ", timerWork)
+    console.log("Игра: ", gameStart)
+    console.log("----------------------------------")
   }
 
   return (
@@ -202,7 +218,7 @@ export default function Home() {
       <div className='fieldDiv'>
         <div className='fieldInfo'>
           {field.length ? <span className='fieldSpan'>ОТМЕЧЕНО: {flags}</span> : null}
-          {field.length ? <span className='fieldSpan'>ОСТАЛОСЬ: {time}с</span> : null}
+          {field.length ? <span className='fieldSpan'>ОСТАЛОСЬ: {time ? time : timeX}с</span> : null}
         </div>
         {field?.map((cellX:any, indexX:number)=>(
           <div className='fieldCellX' key={cellX.id} onContextMenu={(e)=>{e.preventDefault()}}>
@@ -218,12 +234,12 @@ export default function Home() {
             cell.click && cell.countBomb === 7 ? 'seven' : 
             cell.click && cell.countBomb === 8 ? 'eight' : 
             cell.flag === true ? 'flag' :
-            null}`} key={cell.id} onClick={()=>cellClick(indexX, index)} onContextMenu={(e)=>putFlag(e, indexX, index)}>{cell.countBomb ? cell.countBomb : null}</button>
+            null}`} key={cell.id} onClick={()=>cellClick(indexX, index)} onContextMenu={(e)=>putFlag(e, indexX, index)}>{cell?.countBomb}</button>
           ))}
           </div>
         ))}
       </div>
-      {win.current > 0 || x > 0 ? <TotalResult
+      {win.current === 2 ? <TotalResult
         gameStart={gameStart}
         setField={setField}
         win={win}
@@ -233,8 +249,8 @@ export default function Home() {
         bombs={bombs}
         timeX={timeX}
         time={time}
-        setX={setX}
       /> : null}
+      <button onClick={data}>ДАННЫЕ</button>
     </div>
   )
 }
