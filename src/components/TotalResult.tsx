@@ -1,9 +1,10 @@
-export default function TotalResult({gameStart, setField, win, executed, timerWork, size, bombs, timeX, time}:any) {
+export default function TotalResult({gameStart, setField, win, setWin, winX, executed, timerWork, size, bombs, timeX, time}:any) {
   const newGame = () => {
       setTimeout(() => {
       gameStart.current = false
       setField([])
-      win.current = 0
+      setWin(0)
+      winX.current = 0
       executed.current = false
       timerWork.current = false
     }, 100)
@@ -13,7 +14,7 @@ export default function TotalResult({gameStart, setField, win, executed, timerWo
 
   return(
     <div className="totalDiv">
-      {win.current === 1 ? 
+      {win === 1 ? 
       <span className="win">ОБЕЗВРЕЖЕННО</span> :
       <span className="lose">ПОДОРВАН</span>}
       <span className="totalSpan">ПОЛЕ: {size.X} X {size.Y}</span>

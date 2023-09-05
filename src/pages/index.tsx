@@ -10,7 +10,8 @@ export default function Home() {
   const executed = useRef<boolean>(false)
   const [flags, setFlags] = useState<number>(0)
   const [markedBombs, setMarkedBombs] = useState<number>(0)
-  const win = useRef<number>(0)
+  const winX = useRef<number>(0)
+  const [win, setWin] = useState<number>(0)
   const [error, setError] = useState<string>("")
   const [time, setTime] = useState<number>(0)
   const [timeX, setTimeX] = useState<number>(0)
@@ -19,7 +20,7 @@ export default function Home() {
 
   useEffect(() => {
     if ((markedBombs === bombs && flags === bombs) && (markedBombs > 0 && flags > 0)) {
-      win.current = 1
+      setWin(1)
     }
   }, [markedBombs, flags])
 
@@ -44,7 +45,7 @@ export default function Home() {
       executed.current = false
       setFlags(0)
       setMarkedBombs(0)
-      setTime(0)
+      setTime(timeX)
       timerWork.current = false
       setError("")
       const fieldX:any = []
@@ -95,14 +96,15 @@ export default function Home() {
   const startTimer = () => {
     const timer = setInterval(() => {
       setTime(prevTime => {
-        if (win.current > 0) {
+        if (winX.current > 0) {
           clearInterval(timer)
           timerWork.current = false
           return prevTime
         } else if (prevTime === 0 && executed.current && timerWork.current) {
           clearInterval(timer)
-          win.current = 2
+          winX.current = 2
           timerWork.current = false
+          setField(field)
           return prevTime
         } else if (timerWork.current) {
           return prevTime - 1
@@ -115,13 +117,12 @@ export default function Home() {
   }
 
   const cellClick = (idX:number, id:number) => {
-    //if (win.current) { return }
+    if (winX.current) { return }
     if (!executed.current) {
       gameStart.current = true
       executed.current = true
       randomBomb(idX, id)
       if (timeX) {
-        setTime(timeX)
         timerWork.current = true
         startTimer()
       }
@@ -133,7 +134,7 @@ export default function Home() {
           fieldX.map((arrayX: any) => arrayX.array.map((cellX: any) => {
             cellX.bomb ? cellX.click = true : null
             cellX.flag ? cellX.flag = false : null
-            win.current = 2
+            setWin(2)
           }))
         } else if (fieldX[idX].array[id].click === false) {
           if (services.saper.checkBomb(idX, id, fieldX)) {
@@ -157,7 +158,7 @@ export default function Home() {
   }
 
   const putFlag = (e:any, idX:number, id:number) => {
-    //if (win.current) { return }
+    if (winX.current) { return }
     e.preventDefault()
     if (!field[idX].array[id].click && executed.current) {
       let flagsX:number = flags
@@ -187,6 +188,7 @@ export default function Home() {
     console.log("Флагов: ", flags)
     console.log("Правильных бомб: ", markedBombs)
     console.log("Итог игры: ", win)
+    console.log("Итог игры 2: ", winX)
     console.log("Ошибка: ", error)
     console.log("Вычисляемое время: ", time)
     console.log("Назначеное время: ", timeX)
@@ -210,7 +212,7 @@ export default function Home() {
         </div>
         <div className='gameDiv'>
           <span className='bombSpan'>ВРЕМЯ: </span>
-          <input className='gameTime' autoComplete="off" onChange={!gameStart.current ? (e)=>setTimeX(Number(e.target.value)) : null}></input>
+          <input className='gameTime' autoComplete="off" onChange={!executed.current ? (e)=>setTimeX(Number(e.target.value)) : null}></input>
         </div>
         <button className='gameButton' onClick={fillState}>НАЧАТЬ ИГРУ</button>
         <span className='errorSpan'>{error}</span>
@@ -218,7 +220,7 @@ export default function Home() {
       <div className='fieldDiv'>
         <div className='fieldInfo'>
           {field.length ? <span className='fieldSpan'>ОТМЕЧЕНО: {flags}</span> : null}
-          {field.length ? <span className='fieldSpan'>ОСТАЛОСЬ: {time ? time : timeX}с</span> : null}
+          {field.length ? <span className='fieldSpan'>ОСТАЛОСЬ: {time}с</span> : null}
         </div>
         {field?.map((cellX:any, indexX:number)=>(
           <div className='fieldCellX' key={cellX.id} onContextMenu={(e)=>{e.preventDefault()}}>
@@ -239,10 +241,12 @@ export default function Home() {
           </div>
         ))}
       </div>
-      {win.current === 2 ? <TotalResult
+      {win > 0 || winX.current > 0 ? <TotalResult
         gameStart={gameStart}
         setField={setField}
         win={win}
+        setWin={setWin}
+        winX = {winX}
         executed={executed}
         timerWork={timerWork}
         size={size}
