@@ -129,31 +129,37 @@ export default function Home() {
       }
     }
     if (!field[idX]?.array[id]?.flag) {
+      let fun = true
       const fieldX:any = [...field]
-      if (!(idX < 0 || idX >= fieldX.length || id < 0 || id >= fieldX[idX].length) && fieldX[idX]?.array[id]?.click === false) {
-        if (fieldX[idX]?.array[id]?.bomb === true) {
-          fieldX.map((arrayX: any) => arrayX.array.map((cellX: any) => {
-            cellX.bomb ? cellX.click = true : null
-            cellX.flag ? cellX.flag = false : null
-            setWin(2)
-            winX.current = 2
-          }))
-        } else if (fieldX[idX].array[id].click === false) {
-          if (services.saper.checkBomb(idX, id, fieldX)) {
+      const checkCell = (idX:number, id:number) => { 
+        if (!(idX < 0 || idX >= fieldX.length || id < 0 || id >= fieldX[idX].length) && fieldX[idX]?.array[id]?.click === false) {
+          if (fieldX[idX]?.array[id]?.bomb === true) {
+            fieldX.map((arrayX: any) => arrayX.array.map((cellX: any) => {
+              cellX.bomb ? cellX.click = true : null
+              cellX.flag ? cellX.flag = false : null
+              setWin(2)
+              winX.current = 2
+            }))
+          } else if (fieldX[idX].array[id].click === false) {
             fieldX[idX].array[id].countBomb = services.saper.checkBomb(idX, id, fieldX)
-          } else {
-            fieldX[idX].array[id].click = true
-            cellClick(idX - 1, id - 1)
-            cellClick(idX - 1, id)
-            cellClick(idX - 1, id + 1)
-            cellClick(idX, id - 1)
-            cellClick(idX, id + 1)
-            cellClick(idX + 1, id - 1)
-            cellClick(idX + 1, id)
-            cellClick(idX + 1, id + 1)
+            if (!fieldX[idX].array[id].countBomb) {
+              fieldX[idX].array[id].click = true
+              if (!fieldX[idX - 1]?.array[id - 1]?.click) { checkCell(idX - 1, id - 1)} 
+              if (!fieldX[idX - 1]?.array[id]?.click) { checkCell(idX - 1, id) }
+              if (!fieldX[idX - 1]?.array[id + 1]?.click) { checkCell(idX - 1, id + 1) }
+              if (!fieldX[idX]?.array[id - 1]?.click) { checkCell(idX, id - 1) }
+              if (!fieldX[idX]?.array[id + 1]?.click) { checkCell(idX, id + 1) }
+              if (!fieldX[idX + 1]?.array[id - 1]?.click ) { checkCell(idX + 1, id - 1) }
+              if (!fieldX[idX + 1]?.array[id]?.click) { checkCell(idX + 1, id) }
+              if (!fieldX[idX + 1]?.array[id + 1]?.click) { checkCell(idX + 1, id + 1) }
+            }
           }
+          fieldX[idX].array[id].click = true
         }
-        fieldX[idX].array[id].click = true
+      }
+      if (fun) {
+        checkCell(idX, id)
+        fun = false
       }
       setField(fieldX)
     }
