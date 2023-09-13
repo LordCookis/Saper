@@ -11,6 +11,7 @@ export default function TotalResult({gameStart, setField, win, setWin, winX, exe
   }
 
   const timeSpent = `${Math.floor((timeX.current - time) / 60)}:${((timeX.current - time) % 60).toString().padStart(2, '0')}`
+  console.log(timeX)
 
   return(
     <div className="totalDiv">
@@ -19,7 +20,7 @@ export default function TotalResult({gameStart, setField, win, setWin, winX, exe
       <span className="lose">ПОДОРВАН</span>}
       <span className="totalSpan">ПОЛЕ: {size.X} X {size.Y}</span>
       <span className="totalSpan">БОМБ: {bombs}</span>
-      {timeX ? <span className="totalSpan">ВРЕМЯ: {timeSpent}</span> : null}
+      {timeX.current ? <span className="totalSpan">ВРЕМЯ: {timeSpent}</span> : null}
       <button className="totalButton" onClick={newGame}>НОВАЯ ИГРА</button>
     </div>
   )

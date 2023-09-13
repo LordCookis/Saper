@@ -129,37 +129,46 @@ export default function Home() {
       }
     }
     if (!field[idX]?.array[id]?.flag) {
-      let fun = true
       const fieldX:any = [...field]
-      const checkCell = (idX:number, id:number) => { 
-        if (!(idX < 0 || idX >= fieldX.length || id < 0 || id >= fieldX[idX].length) && fieldX[idX]?.array[id]?.click === false) {
-          if (fieldX[idX]?.array[id]?.bomb === true) {
-            fieldX.map((arrayX: any) => arrayX.array.map((cellX: any) => {
-              cellX.bomb ? cellX.click = true : null
-              cellX.flag ? cellX.flag = false : null
-              setWin(2)
-              winX.current = 2
-            }))
-          } else if (fieldX[idX].array[id].click === false) {
+      const stack:{idX:number; id:number}[] = [{ idX, id }]
+      while (stack.length > 0) {
+        const { idX, id } = stack.pop()!
+        if (idX >= 0 && idX < fieldX.length && id >= 0 && id < fieldX[idX]?.array.length && !fieldX[idX].array[id].click) {
+          fieldX[idX].array[id].click = true
+          if (fieldX[idX].array[id].bomb) {
+            fieldX.forEach((arrayX: any) => {
+              arrayX.array.forEach((cellX: any) => {
+                if (cellX.bomb) {
+                  cellX.click = true
+                  cellX.flag = false
+                }
+              })
+            })
+            setWin(2)
+            winX.current = 2
+          } else {
             fieldX[idX].array[id].countBomb = services.saper.checkBomb(idX, id, fieldX)
             if (!fieldX[idX].array[id].countBomb) {
-              fieldX[idX].array[id].click = true
-              if (!fieldX[idX - 1]?.array[id - 1]?.click) { checkCell(idX - 1, id - 1)} 
-              if (!fieldX[idX - 1]?.array[id]?.click) { checkCell(idX - 1, id) }
-              if (!fieldX[idX - 1]?.array[id + 1]?.click) { checkCell(idX - 1, id + 1) }
-              if (!fieldX[idX]?.array[id - 1]?.click) { checkCell(idX, id - 1) }
-              if (!fieldX[idX]?.array[id + 1]?.click) { checkCell(idX, id + 1) }
-              if (!fieldX[idX + 1]?.array[id - 1]?.click ) { checkCell(idX + 1, id - 1) }
-              if (!fieldX[idX + 1]?.array[id]?.click) { checkCell(idX + 1, id) }
-              if (!fieldX[idX + 1]?.array[id + 1]?.click) { checkCell(idX + 1, id + 1) }
+              const aroundCells = [
+                { idX: idX - 1, id: id - 1 },
+                { idX: idX - 1, id },
+                { idX: idX - 1, id: id + 1 },
+                { idX, id: id - 1 },
+                { idX, id: id + 1 },
+                { idX: idX + 1, id: id - 1 },
+                { idX: idX + 1, id },
+                { idX: idX + 1, id: id + 1 },
+              ]
+              stack.push(...aroundCells.filter(cell => (
+                cell.idX >= 0 &&
+                cell.idX < fieldX.length &&
+                cell.id >= 0 &&
+                cell.id < fieldX[cell.idX]?.array.length &&
+                !fieldX[cell.idX].array[cell.id].click
+              )))
             }
           }
-          fieldX[idX].array[id].click = true
         }
-      }
-      if (fun) {
-        checkCell(idX, id)
-        fun = false
       }
       setField(fieldX)
     }
@@ -209,12 +218,12 @@ export default function Home() {
       </div>
       <div className='fieldDiv'>
         <div className='fieldInfo'>
-          {field.length ? <span className='fieldSpan'>ОТМЕЧЕНО: {flags}</span> : null}
-          {field.length ? <span className='fieldSpan'>ОСТАЛОСЬ: {time}с</span> : null}
+          {field.length ? <span className='fieldSpan'>БОМБ: {bombs - flags}</span> : null}
+          {field.length ? <span className='fieldSpan'>ВРЕМЯ: {time}с</span> : null}
         </div>
         {field?.map((cellX:any, indexX:number)=>(
           <div className='fieldCellX' key={cellX.id} onContextMenu={(e)=>{e.preventDefault()}}>
-          {cellX?.array?.map((cell:any, index: number)=>(
+          {cellX?.array?.map((cell:any, index:number)=>(
             <button className={`${cell.click && cell.bomb ? 'bomb' : ''} 
             ${cell.click && cell.countBomb === 0 ? 'click' : 
             cell.click && cell.countBomb === 1 ? 'one' : 
