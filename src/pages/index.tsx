@@ -6,7 +6,8 @@ export default function Home() {
   const [field, setField] = useState<any>([])
   interface Size {X: number, Y: number}
   const [size, setSize] = useState<Size>({X: 0, Y: 0})
-  const [bombs, setBombs] = useState<number>(0)
+  interface Bomb {X: number, Y: number}
+  const [bombs, setBombs] = useState<Bomb>({X: 0, Y: 0})
   const executed = useRef<boolean>(false)
   const [flags, setFlags] = useState<number>(0)
   const [markedBombs, setMarkedBombs] = useState<number>(0)
@@ -19,7 +20,7 @@ export default function Home() {
   const gameStart = useRef<boolean>(false)
 
   useEffect(() => {
-    if ((markedBombs === bombs && flags === bombs) && (markedBombs > 0 && flags > 0)) {
+    if ((markedBombs === bombs.Y && flags === bombs.Y) && (markedBombs > 0 && flags > 0)) {
       setWin(1)
       winX.current = 1
     }
@@ -27,22 +28,17 @@ export default function Home() {
 
   const fillState = (e:any) => {
     e.preventDefault()
-    if (isNaN(size.X) || isNaN(size.Y)) {
-      setError("Ошибка: размер поля должен быть числом")
-    } else if (!size.X || !size.Y) {
+    if (!size.X || !size.Y) {
       setError("Ошибка: размер поля не указан")
-    } else if (isNaN(bombs)) {
-      setError("Ошибка: количество бомб должно быть числом")
-    } else if (size.X * size.Y === bombs) {
+    } else if (size.X * size.Y === bombs.X) {
       setError("Ошибка: минимум одна ячейка должна быть без бомбы")
-    } else if (size.X * size.Y < bombs) {
+    } else if (size.X * size.Y < bombs.X) {
       setError("Ошибка: бомб больше чем ячеек на поле")
-    } else if (bombs < 1) {
+    } else if (bombs.X < 1) {
       setError("Ошибка: должна быть минимум одна бомба")
-    } else if (isNaN(timeX.current)) {
-      setError("Ошибка: количество секунд должно быть числом")
     } else {
       setField([])
+      setBombs({...bombs, Y: bombs.X})
       executed.current = false
       setFlags(0)
       setMarkedBombs(0)
@@ -76,7 +72,7 @@ export default function Home() {
 
   const randomBomb = (idX:number, id:number) => {
     const arrayBombs:number[] = []
-    while (arrayBombs.length < bombs) {
+    while (arrayBombs.length < bombs.Y) {
       const randomCell = Math.floor(Math.random() * (size.X * size.Y));
       if (randomCell !== field[idX].array[id].id && !arrayBombs.includes(randomCell)) {
         arrayBombs.push(randomCell)
@@ -128,45 +124,43 @@ export default function Home() {
         startTimer()
       }
     }
-    if (!field[idX]?.array[id]?.flag) {
+    if (!field[idX].array[id].flag && !field[idX].array[id].click) {
       const fieldX:any = [...field]
       const stack:{idX:number; id:number}[] = [{ idX, id }]
       while (stack.length > 0) {
-        const { idX, id } = stack.pop()!
-        if (idX >= 0 && idX < fieldX.length && id >= 0 && id < fieldX[idX]?.array.length && !fieldX[idX].array[id].click) {
-          fieldX[idX].array[id].click = true
-          if (fieldX[idX].array[id].bomb) {
-            fieldX.forEach((arrayX: any) => {
-              arrayX.array.forEach((cellX: any) => {
-                if (cellX.bomb) {
-                  cellX.click = true
-                  cellX.flag = false
-                }
-              })
+        const {idX, id} = stack.pop()!
+        fieldX[idX].array[id].click = true
+        if (fieldX[idX].array[id].bomb) {
+          fieldX.forEach((arrayX: any) => {
+            arrayX.array.forEach((cellX: any) => {
+              if (cellX.bomb) {
+                cellX.click = true
+                cellX.flag = false
+              }
             })
-            setWin(2)
-            winX.current = 2
-          } else {
-            fieldX[idX].array[id].countBomb = services.saper.checkBomb(idX, id, fieldX)
-            if (!fieldX[idX].array[id].countBomb) {
-              const aroundCells = [
-                { idX: idX - 1, id: id - 1 },
-                { idX: idX - 1, id },
-                { idX: idX - 1, id: id + 1 },
-                { idX, id: id - 1 },
-                { idX, id: id + 1 },
-                { idX: idX + 1, id: id - 1 },
-                { idX: idX + 1, id },
-                { idX: idX + 1, id: id + 1 },
-              ]
-              stack.push(...aroundCells.filter(cell => (
-                cell.idX >= 0 &&
-                cell.idX < fieldX.length &&
-                cell.id >= 0 &&
-                cell.id < fieldX[cell.idX]?.array.length &&
-                !fieldX[cell.idX].array[cell.id].click
-              )))
-            }
+          })
+          setWin(2)
+          winX.current = 2
+        } else {
+          fieldX[idX].array[id].countBomb = services.saper.checkBomb(idX, id, fieldX)
+          if (!fieldX[idX].array[id].countBomb) {
+            const aroundCells = [
+              { idX: idX - 1, id: id - 1 },
+              { idX: idX - 1, id },
+              { idX: idX - 1, id: id + 1 },
+              { idX, id: id - 1 },
+              { idX, id: id + 1 },
+              { idX: idX + 1, id: id - 1 },
+              { idX: idX + 1, id },
+              { idX: idX + 1, id: id + 1 },
+            ]
+            stack.push(...aroundCells.filter(cell => (
+              cell.idX >= 0 &&
+              cell.idX < fieldX.length &&
+              cell.id >= 0 &&
+              cell.id < fieldX[cell.idX]?.array.length &&
+              !fieldX[cell.idX].array[cell.id].click
+            )))
           }
         }
       }
@@ -196,29 +190,39 @@ export default function Home() {
     }
   }
 
+  const inputSizeX = (e:any) => {/^\d+$/.test(e.target.value) || e.target.value === '' ? setSize({...size, X: Number(e.target.value)}) : null}
+  const inputSizeY = (e:any) => {/^\d+$/.test(e.target.value) || e.target.value === '' ? setSize({...size, Y: Number(e.target.value)}) : null}
+  const inputBombs = (e:any) => {/^\d+$/.test(e.target.value) || e.target.value === '' ? setBombs({...bombs, X: Number(e.target.value)}) : null}
+  const inputTimeX = (e:any) => {
+    if ((e.target.value.charAt(0) !== "0" || e.target.value.length === 1) && (/^\d+$/.test(e.target.value) && e.target.value !== '')) {
+      timeX.current = e.target.value
+      setBombs({...bombs, X: bombs.X})
+    }
+  }
+
   return (
     <div className='mainPage'>
       <span className='mainSpan'>«РАЗРЫВНАЯ»</span>
       <div className='gameForm' >
         <div className='gameDiv'>
-          <input className='gameInput' autoComplete="off" onChange={(e)=>setSize({...size, X: Number(e.target.value)})}></input>
+          <input className='gameInput' autoComplete="off" value={size.X} onChange={inputSizeX}></input>
           <span className='gameSpan'>X</span>
-          <input className='gameInput' autoComplete="off" onChange={(e)=>setSize({...size, Y: Number(e.target.value)})}></input>
+          <input className='gameInput' autoComplete="off" value={size.Y} onChange={inputSizeY}></input>
         </div>
         <div className='gameDiv'>
           <span className='bombSpan'>БОМБ: </span>
-          <input className='gameInput' autoComplete="off" onChange={(e)=>setBombs(Number(e.target.value))}></input>
+          <input className='gameInput' autoComplete="off" value={bombs.X} onChange={inputBombs}></input>
         </div>
         <div className='gameDiv'>
           <span className='bombSpan'>ВРЕМЯ: </span>
-          <input className='gameTime' autoComplete="off" onChange={(e)=>timeX.current = Number(e.target.value)}></input>
+          <input className='gameTime' autoComplete="off" value={timeX.current} onChange={inputTimeX}></input>
         </div>
         <button className='gameButton' onClick={fillState}>НАЧАТЬ ИГРУ</button>
         <span className='errorSpan'>{error}</span>
       </div>
       <div className='fieldDiv'>
         <div className='fieldInfo'>
-          {field.length ? <span className='fieldSpan'>БОМБ: {bombs - flags}</span> : null}
+          {field.length ? <span className='fieldSpan'>БОМБ: {bombs.Y - flags}</span> : null}
           {field.length ? <span className='fieldSpan'>ВРЕМЯ: {time}с</span> : null}
         </div>
         {field?.map((cellX:any, indexX:number)=>(

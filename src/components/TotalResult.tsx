@@ -19,7 +19,7 @@ export default function TotalResult({gameStart, setField, win, setWin, winX, exe
       <span className="win">ОБЕЗВРЕЖЕННО</span> :
       <span className="lose">ПОДОРВАН</span>}
       <span className="totalSpan">ПОЛЕ: {size.X} X {size.Y}</span>
-      <span className="totalSpan">БОМБ: {bombs}</span>
+      <span className="totalSpan">БОМБ: {bombs.Y}</span>
       {timeX.current ? <span className="totalSpan">ВРЕМЯ: {timeSpent}</span> : null}
       <button className="totalButton" onClick={newGame}>НОВАЯ ИГРА</button>
     </div>
