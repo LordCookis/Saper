@@ -74,18 +74,15 @@ export default function Home() {
     const arrayBombs:number[] = []
     while (arrayBombs.length < bombs.Y) {
       const randomCell = Math.floor(Math.random() * (size.X * size.Y));
-      if (randomCell !== field[idX].array[id].id && !arrayBombs.includes(randomCell)) {
-        arrayBombs.push(randomCell)
-      }
+      randomCell !== field[idX].array[id].id && !arrayBombs.includes(randomCell) ? arrayBombs.push(randomCell) : null
     }
     const fieldX = [...field]
     arrayBombs.forEach(bombId => {
-      fieldX.forEach(arrayX => 
+      fieldX.forEach(arrayX => {
         arrayX.array.forEach((cell:{id:number, bomb:boolean}) => {
-          if (cell.id === bombId) {
-            cell.bomb = true
-          }
-      }))
+          cell.id === bombId ? cell.bomb = true : null
+        })
+      })
     })
     setField(fieldX)
   }
@@ -113,6 +110,26 @@ export default function Home() {
     }, 1000)
   }
 
+  const checkCell = (idX:number, id:number) => {
+    const fieldX:any = [...field]
+    let stack:{idX:number; id:number}[] = [{idX, id}]
+    console.log("----------------")
+    while (stack.length > 0) {
+      const {idX, id} = stack.pop()
+      fieldX[idX].array[id].click = true
+      fieldX[idX].array[id].countBomb = services.saper.checkBomb(idX, id, fieldX)
+      if (fieldX[idX].array[id].bomb) {
+        fieldX[idX].array[id].countBomb = 0
+        fieldX.forEach((arrayX: any) => {arrayX.array.forEach((cellX: any) => {cellX.bomb ? cellX.click = true : null})})
+        setWin(2)
+        winX.current = 2
+      } else if (!fieldX[idX].array[id].countBomb) {    
+        stack = services.saper.checkAround(idX, id, fieldX, stack)
+      }
+    }
+    setField(fieldX)
+  }
+
   const cellClick = (idX:number, id:number) => {
     if (winX.current) { return }
     if (!executed.current) {
@@ -124,48 +141,7 @@ export default function Home() {
         startTimer()
       }
     }
-    if (!field[idX].array[id].flag && !field[idX].array[id].click) {
-      const fieldX:any = [...field]
-      const stack:{idX:number; id:number}[] = [{ idX, id }]
-      while (stack.length > 0) {
-        const {idX, id} = stack.pop()!
-        fieldX[idX].array[id].click = true
-        if (fieldX[idX].array[id].bomb) {
-          fieldX.forEach((arrayX: any) => {
-            arrayX.array.forEach((cellX: any) => {
-              if (cellX.bomb) {
-                cellX.click = true
-                cellX.flag = false
-              }
-            })
-          })
-          setWin(2)
-          winX.current = 2
-        } else {
-          fieldX[idX].array[id].countBomb = services.saper.checkBomb(idX, id, fieldX)
-          if (!fieldX[idX].array[id].countBomb) {
-            const aroundCells = [
-              { idX: idX - 1, id: id - 1 },
-              { idX: idX - 1, id },
-              { idX: idX - 1, id: id + 1 },
-              { idX, id: id - 1 },
-              { idX, id: id + 1 },
-              { idX: idX + 1, id: id - 1 },
-              { idX: idX + 1, id },
-              { idX: idX + 1, id: id + 1 },
-            ]
-            stack.push(...aroundCells.filter(cell => (
-              cell.idX >= 0 &&
-              cell.idX < fieldX.length &&
-              cell.id >= 0 &&
-              cell.id < fieldX[cell.idX]?.array.length &&
-              !fieldX[cell.idX].array[cell.id].click
-            )))
-          }
-        }
-      }
-      setField(fieldX)
-    }
+    if (!field[idX].array[id].flag && !field[idX].array[id].click) { checkCell(idX, id) }
   }
 
   const putFlag = (e:any, idX:number, id:number) => {
@@ -190,9 +166,9 @@ export default function Home() {
     }
   }
 
-  const inputSizeX = (e:any) => {/^\d+$/.test(e.target.value) || e.target.value === '' ? setSize({...size, X: Number(e.target.value)}) : null}
-  const inputSizeY = (e:any) => {/^\d+$/.test(e.target.value) || e.target.value === '' ? setSize({...size, Y: Number(e.target.value)}) : null}
-  const inputBombs = (e:any) => {/^\d+$/.test(e.target.value) || e.target.value === '' ? setBombs({...bombs, X: Number(e.target.value)}) : null}
+  const inputSizeX = (e:any) => { /^\d+$/.test(e.target.value) || e.target.value === '' ? setSize({...size, X: Number(e.target.value)}) : null }
+  const inputSizeY = (e:any) => { /^\d+$/.test(e.target.value) || e.target.value === '' ? setSize({...size, Y: Number(e.target.value)}) : null }
+  const inputBombs = (e:any) => { /^\d+$/.test(e.target.value) || e.target.value === '' ? setBombs({...bombs, X: Number(e.target.value)}) : null }
   const inputTimeX = (e:any) => {
     if ((e.target.value.charAt(0) !== "0" || e.target.value.length === 1) && (/^\d+$/.test(e.target.value) && e.target.value !== '')) {
       timeX.current = e.target.value
