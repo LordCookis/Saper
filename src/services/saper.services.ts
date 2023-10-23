@@ -43,7 +43,8 @@ export const saperServices = {
       cell.idX < fieldX.length &&
       cell.id >= 0 &&
       cell.id < fieldX[cell.idX]?.array.length &&
-      !fieldX[cell.idX].array[cell.id].click
+      !fieldX[cell.idX].array[cell.id].click &&
+      !fieldX[cell.idX].array[cell.id].flag
     )))
     return stack
   }

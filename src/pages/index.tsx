@@ -8,121 +8,95 @@ export default function Home() {
   const [size, setSize] = useState<Size>({X: 0, Y: 0})
   interface Bomb {X: number, Y: number}
   const [bombs, setBombs] = useState<Bomb>({X: 0, Y: 0})
-  const executed = useRef<boolean>(false)
-  const [flags, setFlags] = useState<number>(0)
-  const [markedBombs, setMarkedBombs] = useState<number>(0)
-  const winX = useRef<number>(0)
-  const [win, setWin] = useState<number>(0)
+  interface Time {X: number, Y: number}
+  const [times, setTimes] = useState<Time>({X: 0, Y: 0})
+  interface Flag {X: number, Y: number}
+  const [flags, setFlags] = useState<Flag>({X: 0, Y: 0})
   const [error, setError] = useState<string>("")
-  const [time, setTime] = useState<number>(0)
-  const timeX = useRef<number>(0)
-  const timerWork = useRef<boolean>(false)
-  const gameStart = useRef<boolean>(false)
+  const gameActive = useRef<boolean>(false)
+  const executed = useRef<boolean>(false)
+  const win = useRef<number>(0)
 
   useEffect(() => {
-    if ((markedBombs === bombs.Y && flags === bombs.Y) && (markedBombs > 0 && flags > 0)) {
-      setWin(1)
-      winX.current = 1
+    if (field.lenght && flags.X === flags.Y && flags.Y === bombs.Y) {
+      win.current = 1
+      setFlags({...flags, Y: flags.X})
     }
-  }, [markedBombs, flags])
+  }, [flags.X])
 
   const fillState = (e:any) => {
     e.preventDefault()
-    if (!size.X || !size.Y) {
-      setError("Ошибка: размер поля не указан")
-    } else if (size.X * size.Y === bombs.X) {
-      setError("Ошибка: минимум одна ячейка должна быть без бомбы")
-    } else if (size.X * size.Y < bombs.X) {
-      setError("Ошибка: бомб больше чем ячеек на поле")
-    } else if (bombs.X < 1) {
-      setError("Ошибка: должна быть минимум одна бомба")
-    } else {
-      setField([])
-      setBombs({...bombs, Y: bombs.X})
-      executed.current = false
-      setFlags(0)
-      setMarkedBombs(0)
-      setTime(timeX.current)
-      timerWork.current = false
-      setError("")
-      const fieldX:any = []
-      let idX:number = 0
-      let idY:number = 0
-      for (let i = 0; i < size.X; i++) {
-        const arrayX:any = []
-        for (let j = 0; j < size.Y; j++) {
-          arrayX.push({
-            id: idY,
-            bomb: false,
-            click: false,
-            countBomb: 0,
-            flag: false
-          })
-          idY++
-        }
-        fieldX.push({
+    const fieldX:any = []
+    let idX:number = 0
+    for (let i = 0; i < size.X; i++) {
+      const arrayX:any = []
+      for (let j = 0; j < size.Y; j++) {
+        arrayX.push({
           id: idX,
-          array: arrayX
+          bomb: false,
+          click: false,
+          countBomb: 0,
+          flag: false
         })
         idX++
       }
-      setField(fieldX)
+      fieldX.push({
+        id: i,
+        array: arrayX
+      })
+      idX++
     }
+    setField(fieldX)
+    setBombs({...bombs, Y: bombs.X})
+    setTimes({...times, Y: times.X})
+    setFlags({X: 0, Y: 0})
+    gameActive.current = true
+    executed.current = false
+    setError("")
   }
 
-  const randomBomb = (idX:number, id:number) => {
-    const arrayBombs:number[] = []
+  const randomBomb = (cell:any) => {
+    const arrayBombs:any = []
     while (arrayBombs.length < bombs.Y) {
-      const randomCell = Math.floor(Math.random() * (size.X * size.Y));
-      randomCell !== field[idX].array[id].id && !arrayBombs.includes(randomCell) ? arrayBombs.push(randomCell) : null
+      const randomCell = Math.floor(Math.random() * (field.length * field[0].array.length))
+      randomCell !== cell.id && !arrayBombs.includes(randomCell) ? arrayBombs.push(randomCell) : null
     }
     const fieldX = [...field]
-    arrayBombs.forEach(bombId => {
-      fieldX.forEach(arrayX => {
-        arrayX.array.forEach((cell:{id:number, bomb:boolean}) => {
-          cell.id === bombId ? cell.bomb = true : null
-        })
-      })
+    fieldX.map((arrayX) => {
+      arrayX.array.map((cellX:any) => arrayBombs.includes(cellX.id) ? cellX.bomb = true : null)
     })
     setField(fieldX)
   }
 
   const startTimer = () => {
+    let timeX = times.Y
     const timer = setInterval(() => {
-      setTime(prevTime => {
-        if (winX.current > 0) {
-          clearInterval(timer)
-          timerWork.current = false
-          return prevTime
-        } else if (prevTime === 0 && executed.current && timerWork.current) {
-          clearInterval(timer)
-          winX.current = 2
-          timerWork.current = false
-          setField(field)
-          return prevTime
-        } else if (timerWork.current) {
-          return prevTime - 1
-        } else {
-          clearInterval(timer)
-          return timeX.current
-        }
-      })
+      if (timeX === 1) {
+        clearInterval(timer)
+        win.current = 2
+        timeX--
+        setTimes({...times, Y: timeX})
+      } else if (win.current > 0) {
+        clearInterval(timer)
+      } else {
+        timeX--
+        setTimes({...times, Y: timeX})
+      }
     }, 1000)
   }
 
   const checkCell = (idX:number, id:number) => {
     const fieldX:any = [...field]
+    fieldX[idX].array[id].click = true
     let stack:{idX:number; id:number}[] = [{idX, id}]
-    console.log("----------------")
     while (stack.length > 0) {
-      const {idX, id} = stack.pop()
+      const {idX, id} = stack.pop()!
       fieldX[idX].array[id].click = true
       fieldX[idX].array[id].countBomb = services.saper.checkBomb(idX, id, fieldX)
       if (fieldX[idX].array[id].bomb) {
         fieldX[idX].array[id].countBomb = 0
         fieldX.forEach((arrayX: any) => {arrayX.array.forEach((cellX: any) => {cellX.bomb ? cellX.click = true : null})})
-        setWin(2)
-        winX.current = 2
+        win.current = 2
       } else if (!fieldX[idX].array[id].countBomb) {    
         stack = services.saper.checkAround(idX, id, fieldX, stack)
       }
@@ -131,75 +105,60 @@ export default function Home() {
   }
 
   const cellClick = (idX:number, id:number) => {
-    if (winX.current) { return }
+    let cell = field[idX].array[id]
     if (!executed.current) {
-      gameStart.current = true
       executed.current = true
-      randomBomb(idX, id)
-      if (timeX.current) {
-        timerWork.current = true
-        startTimer()
-      }
+      randomBomb(cell)
+      times.Y ? startTimer() : null
     }
-    if (!field[idX].array[id].flag && !field[idX].array[id].click) { checkCell(idX, id) }
+    if (!cell.flag && !cell.click) { checkCell(idX, id) }
   }
 
-  const putFlag = (e:any, idX:number, id:number) => {
-    if (winX.current) { return }
-    e.preventDefault()
-    if (!field[idX].array[id].click && executed.current) {
-      let flagsX:number = flags
-      let markedBombsX:number = markedBombs
-      const fieldX:any = [...field]
-      if (fieldX[idX].array[id].flag) {
-        fieldX[idX].array[id].flag = false
-        setFlags(flagsX - 1)
-        fieldX[idX].array[id].countBomb = 0
-        fieldX[idX].array[id].bomb === true ? setMarkedBombs(markedBombsX -= 1) : null 
-      } else {
-        fieldX[idX].array[id].flag = true
-        setFlags(flagsX + 1)
-        fieldX[idX].array[id].countBomb = 'F'
-        fieldX[idX].array[id].bomb === true ? setMarkedBombs(markedBombsX += 1) : null
-      }
-      setField(fieldX)
+  const putFlag = (cell:any) => {
+    if (cell.click || !executed.current) { return }
+    if (cell.flag) {
+      cell.flag = false
+      cell.bomb ? setFlags({...flags, X: flags.X - 1, Y: flags.Y - 1}) : setFlags({...flags, X: flags.X - 1})
+    } else {
+      cell.flag = true
+      cell.bomb ? setFlags({...flags, X: flags.X + 1, Y: flags.Y + 1}) : setFlags({...flags, X: flags.X + 1})
     }
   }
 
-  const inputSizeX = (e:any) => { /^\d+$/.test(e.target.value) || e.target.value === '' ? setSize({...size, X: Number(e.target.value)}) : null }
-  const inputSizeY = (e:any) => { /^\d+$/.test(e.target.value) || e.target.value === '' ? setSize({...size, Y: Number(e.target.value)}) : null }
-  const inputBombs = (e:any) => { /^\d+$/.test(e.target.value) || e.target.value === '' ? setBombs({...bombs, X: Number(e.target.value)}) : null }
-  const inputTimeX = (e:any) => {
-    if ((e.target.value.charAt(0) !== "0" || e.target.value.length === 1) && (/^\d+$/.test(e.target.value) && e.target.value !== '')) {
-      timeX.current = e.target.value
-      setBombs({...bombs, X: bombs.X})
-    }
-  }
+  //const inputSizeX = (e:any) => { /^\d+$/.test(e.target.value) || e.target.value === '' ? setSize({...size, X: Number(e.target.value)}) : null }
+  //const inputSizeY = (e:any) => { /^\d+$/.test(e.target.value) || e.target.value === '' ? setSize({...size, Y: Number(e.target.value)}) : null }
+  //const inputBombs = (e:any) => { /^\d+$/.test(e.target.value) || e.target.value === '' ? setBombs({...bombs, X: Number(e.target.value)}) : null }
+  //const inputTimeX = (e:any) => {
+  //  if ((e.target.value.charAt(0) !== "0" || e.target.value.length === 1) && (/^\d+$/.test(e.target.value) && e.target.value !== '')) {
+  //    timeX.current = e.target.value
+  //    setBombs({...bombs, X: bombs.X})
+  //  }
+  //}
 
   return (
     <div className='mainPage'>
       <span className='mainSpan'>«РАЗРЫВНАЯ»</span>
-      <div className='gameForm' >
+      <form className='gameForm' method="get" onSubmit={fillState}>
         <div className='gameDiv'>
-          <input className='gameInput' autoComplete="off" value={size.X} onChange={inputSizeX}></input>
+          <input className='gameInput' type='number' autoComplete="off" required onChange={(e)=>setSize({...size, X: Number(e.target.value)})} min={2}></input>
           <span className='gameSpan'>X</span>
-          <input className='gameInput' autoComplete="off" value={size.Y} onChange={inputSizeY}></input>
+          <input className='gameInput' type='number' autoComplete="off" required onChange={(e)=>setSize({...size, Y: Number(e.target.value)})} min={2}></input>
         </div>
         <div className='gameDiv'>
           <span className='bombSpan'>БОМБ: </span>
-          <input className='gameInput' autoComplete="off" value={bombs.X} onChange={inputBombs}></input>
+          <input className='gameInput' type='number' autoComplete="off" required onChange={(e)=>setBombs({...bombs, X: Number(e.target.value)})} min={1}></input>
         </div>
         <div className='gameDiv'>
           <span className='bombSpan'>ВРЕМЯ: </span>
-          <input className='gameTime' autoComplete="off" value={timeX.current} onChange={inputTimeX}></input>
+          <input className='gameTime' type='number' autoComplete="off" onChange={(e)=>setTimes({...times, X: Number(e.target.value)})} min={0}></input>
         </div>
-        <button className='gameButton' onClick={fillState}>НАЧАТЬ ИГРУ</button>
+        <button className='gameButton'>НАЧАТЬ ИГРУ</button>
         <span className='errorSpan'>{error}</span>
-      </div>
+      </form>
       <div className='fieldDiv'>
         <div className='fieldInfo'>
-          {field.length ? <span className='fieldSpan'>БОМБ: {bombs.Y - flags}</span> : null}
-          {field.length ? <span className='fieldSpan'>ВРЕМЯ: {time}с</span> : null}
+          {field.length ? <span className='fieldSpan'>Отмечено: {flags.X} / {bombs.Y}</span> : null}
+          {field.length && times.X ? <span className='fieldSpan'>Времени: {times.Y}c</span> : null}
         </div>
         {field?.map((cellX:any, indexX:number)=>(
           <div className='fieldCellX' key={cellX.id} onContextMenu={(e)=>{e.preventDefault()}}>
@@ -215,24 +174,21 @@ export default function Home() {
             cell.click && cell.countBomb === 7 ? 'seven' : 
             cell.click && cell.countBomb === 8 ? 'eight' : 
             cell.flag === true ? 'flag' :
-            null}`} key={cell.id} onClick={()=>cellClick(indexX, index)} onContextMenu={(e)=>putFlag(e, indexX, index)}>{cell?.countBomb}</button>
+            null}`} key={cell.id} onClick={()=>cellClick(indexX, index)} onContextMenu={()=>putFlag(cell)}>{cell?.countBomb}</button>
           ))}
           </div>
         ))}
       </div>
-      {win > 0 || winX.current > 0 ? <TotalResult
-        gameStart={gameStart}
+      {win.current === 0 || 
+      <TotalResult
+        gameActive={gameActive}
         setField={setField}
         win={win}
-        setWin={setWin}
-        winX = {winX}
         executed={executed}
-        timerWork={timerWork}
         size={size}
         bombs={bombs}
-        timeX={timeX}
-        time={time}
-      /> : null}
+        times={times}
+      />}
     </div>
   )
 }
